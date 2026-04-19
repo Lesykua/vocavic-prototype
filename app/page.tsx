@@ -129,7 +129,7 @@ export default function Home() {
                 <span className="w-3 h-3 rounded-full bg-green-400" />
               </div>
               <div className="flex-1 bg-white border border-stone-200 rounded-md px-3 py-1 text-xs text-stone-400 font-mono">
-                app.shiftvoice.io / demo
+                shift&#8209;voice.com
               </div>
               <span className="text-xs text-stone-400 font-medium hidden sm:block">Interactive demo — sample data</span>
             </div>

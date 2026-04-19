@@ -301,7 +301,7 @@ export default function Home() {
           </h2>
           <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-stone-200 shadow-xl shadow-stone-200">
             <iframe
-              src="https://www.youtube.com/embed/JRMZDnN8Zto?rel=0&modestbranding=1"
+              src="https://www.youtube.com/embed/X71YMNsw5UM?rel=0&modestbranding=1"
               title="ShiftVoice — from voice note to replayable event"
               allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen

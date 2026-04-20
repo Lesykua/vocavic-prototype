@@ -1,0 +1,3055 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <title>ShiftVoice — Operator Notes</title>
+  <style>
+    :root {
+      --bg: #f4efe6;
+      --panel: rgba(255, 251, 245, 0.9);
+      --text: #12232c;
+      --muted: #687d85;
+      --border: rgba(18, 35, 44, 0.12);
+      --chipBg: #edf4f1;
+      --chipText: #18343a;
+      --good: #2f8f63;
+      --warn: #c68a22;
+      --bad: #d65848;
+      --accent: #0f5f68;
+      --accentSoft: rgba(15, 95, 104, 0.12);
+      --panelAlt: rgba(239, 246, 244, 0.8);
+      --shadow: 0 26px 70px rgba(34, 52, 62, 0.12);
+      --mark: rgba(242, 190, 85, 0.36);
+      --radiusLg: 28px;
+      --radiusMd: 20px;
+      --radiusSm: 14px;
+      --fontUi: "Aptos", "Segoe UI", "Trebuchet MS", sans-serif;
+      --fontDisplay: "Bahnschrift SemiBold", "Franklin Gothic Medium", "Arial Narrow", sans-serif;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0d1217;
+      --panel: rgba(18, 24, 31, 0.92);
+      --text: #ecf2f4;
+      --muted: #8d9ea6;
+      --border: rgba(203, 223, 229, 0.12);
+      --chipBg: rgba(33, 46, 56, 0.92);
+      --chipText: #e2ecef;
+      --good: #4bbb81;
+      --warn: #d39b34;
+      --bad: #f06d5b;
+      --accent: #74d6d0;
+      --accentSoft: rgba(116, 214, 208, 0.14);
+      --panelAlt: rgba(14, 19, 26, 0.88);
+      --shadow: 0 28px 90px rgba(0, 0, 0, 0.34);
+      --mark: rgba(211, 155, 52, 0.36);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: var(--fontUi);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(244, 187, 117, 0.22), transparent 24%),
+        radial-gradient(circle at top right, rgba(77, 150, 144, 0.18), transparent 22%),
+        linear-gradient(135deg, var(--bg) 0%, color-mix(in srgb, var(--bg) 82%, #d6e2df 18%) 100%);
+      transition: background 180ms ease, color 180ms ease;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.4;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(14, 25, 32, 0.04) 1px, transparent 1px);
+      background-size: 100% 132px, 132px 100%;
+      mix-blend-mode: soft-light;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+      color: inherit;
+    }
+
+    button {
+      border: 0;
+      background: none;
+      cursor: pointer;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--panel) 94%, white 6%);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 0.75rem 0.9rem;
+      outline: none;
+      transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: color-mix(in srgb, var(--accent) 60%, var(--border) 40%);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent 84%);
+    }
+
+    textarea {
+      min-height: 148px;
+      resize: vertical;
+      line-height: 1.55;
+    }
+
+    mark {
+      background: var(--mark);
+      color: inherit;
+      padding: 0 0.08em;
+      border-radius: 0.25em;
+    }
+
+    .app-shell {
+      position: relative;
+      width: min(1540px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 18px 0 28px;
+    }
+
+    .panel {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: var(--radiusLg);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 28%),
+        var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border-radius: inherit;
+      background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.12), transparent 28%);
+      opacity: 0.8;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 1.5fr);
+      gap: 18px;
+      align-items: start;
+      padding: 16px 20px;
+      margin-bottom: 18px;
+    }
+
+    .topbar-left,
+    .topbar-center,
+    .topbar-right {
+      position: relative;
+      z-index: 1;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 10px;
+      min-width: 112px;
+    }
+
+    .brand-wordmark {
+      font-family: var(--fontDisplay);
+      font-size: 1.18rem;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+    }
+
+    .brand-subtle {
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .control {
+      min-width: 132px;
+    }
+
+    .control label,
+    .search-block label {
+      display: block;
+      margin-bottom: 0.45rem;
+      font-size: 0.73rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .topbar-center {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: end;
+      gap: 12px;
+    }
+
+    .segmented {
+      display: inline-flex;
+      gap: 6px;
+      padding: 6px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--panelAlt) 82%, transparent 18%);
+      border: 1px solid var(--border);
+    }
+
+    .segmented button {
+      padding: 0.7rem 1rem;
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 0.94rem;
+      transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+    }
+
+    .segmented button.is-active {
+      background: var(--text);
+      color: var(--bg);
+      transform: translateY(-1px);
+    }
+
+    .shift-inline {
+      min-width: 116px;
+    }
+
+    .topbar-right {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .search-block {
+      min-width: 0;
+    }
+
+    .helper-text {
+      margin-top: 0.55rem;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .status-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+      min-width: 236px;
+    }
+
+    .status-pill,
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 46px;
+      padding: 0.7rem 0.95rem;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--panelAlt) 84%, transparent 16%);
+      color: var(--text);
+    }
+
+    .status-pill {
+      font-size: 0.88rem;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--good);
+      box-shadow: 0 0 0 6px color-mix(in srgb, var(--good) 16%, transparent 84%);
+      flex-shrink: 0;
+    }
+
+    .theme-toggle {
+      transition: border-color 160ms ease, transform 160ms ease;
+    }
+
+    .theme-toggle:hover {
+      transform: translateY(-1px);
+    }
+
+    .theme-toggle small {
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.85fr) minmax(180px, 0.38fr);
+      gap: 18px;
+      margin-bottom: 18px;
+      align-items: stretch;
+    }
+
+    .hero-card,
+    .stat-tile,
+    .stream-shell,
+    .side-card,
+    .context-strip {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-card {
+      padding: 24px 26px 26px;
+      min-height: 232px;
+    }
+
+    .summary-hero {
+      grid-column: auto;
+      min-height: 404px;
+      border-color: color-mix(in srgb, var(--accent) 24%, var(--border) 76%);
+      box-shadow:
+        0 22px 58px color-mix(in srgb, var(--accent) 10%, transparent 90%),
+        var(--shadow);
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--accentSoft) 55%, white 45%) 0%, transparent 48%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 30%),
+        var(--panel);
+    }
+
+    .summary-hero::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 22%, transparent 78%));
+      opacity: 0.9;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .summary-hero-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: start;
+      margin-bottom: 1rem;
+    }
+
+    .summary-hero-copy {
+      max-width: none;
+      width: 100%;
+    }
+
+    .summary-hero-copy p {
+      margin: 0.55rem 0 0;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 0.98rem;
+    }
+
+    .summary-hero .eyebrow {
+      color: color-mix(in srgb, var(--accent) 62%, var(--muted) 38%);
+    }
+
+    .summary-hero .summary-body {
+      font-size: 1.02rem;
+      line-height: 1.72;
+      max-width: none;
+      width: 100%;
+    }
+
+    .summary-hero-tools {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+      min-width: 190px;
+    }
+
+    .summary-hero-tools .summary-actions {
+      margin-top: 0;
+      justify-content: flex-end;
+    }
+
+    .summary-updated {
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .summary-tag-board {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      gap: 14px;
+      margin: 1.1rem 0;
+      padding: 16px;
+      border-radius: 24px;
+      border: 1px solid color-mix(in srgb, var(--border) 84%, transparent 16%);
+      background: color-mix(in srgb, var(--text) 8%, var(--panelAlt) 92%);
+    }
+
+    .summary-tag-panel {
+      padding: 14px 16px;
+      border-radius: 20px;
+      border: 1px solid color-mix(in srgb, var(--border) 72%, transparent 28%);
+      background: color-mix(in srgb, var(--panel) 72%, var(--text) 28%);
+    }
+
+    .summary-tag-panel.is-watch {
+      background: color-mix(in srgb, var(--bad) 9%, var(--panelAlt) 91%);
+      border-color: color-mix(in srgb, var(--bad) 26%, transparent 74%);
+    }
+
+    .summary-tag-title {
+      margin: 0 0 0.75rem;
+      font-size: 0.73rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .summary-tag-list {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .summary-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.5rem 0.8rem;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-size: 0.83rem;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .summary-tag.theme {
+      background: color-mix(in srgb, var(--accentSoft) 72%, white 28%);
+      border-color: color-mix(in srgb, var(--accent) 20%, transparent 80%);
+      color: color-mix(in srgb, var(--accent) 78%, var(--text) 22%);
+    }
+
+    .summary-tag.action {
+      background: color-mix(in srgb, var(--good) 10%, transparent 90%);
+      border-color: color-mix(in srgb, var(--good) 26%, transparent 74%);
+      color: color-mix(in srgb, var(--good) 86%, var(--text) 14%);
+    }
+
+    .summary-tag.open {
+      background: color-mix(in srgb, var(--warn) 11%, transparent 89%);
+      border-color: color-mix(in srgb, var(--warn) 28%, transparent 72%);
+      color: color-mix(in srgb, var(--warn) 86%, var(--text) 14%);
+    }
+
+    .summary-tag.watch {
+      background: color-mix(in srgb, var(--bad) 12%, transparent 88%);
+      border-color: color-mix(in srgb, var(--bad) 30%, transparent 70%);
+      color: color-mix(in srgb, var(--bad) 90%, var(--text) 10%);
+    }
+
+    .summary-metrics-card {
+      min-height: 404px;
+      padding: 0;
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      overflow: hidden;
+    }
+
+    .summary-metric {
+      position: relative;
+      z-index: 1;
+      padding: 20px 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 10px;
+    }
+
+    .summary-metric + .summary-metric {
+      border-top: 1px solid var(--border);
+    }
+
+    .summary-metric > div {
+      display: grid;
+      gap: 8px;
+      justify-items: center;
+    }
+
+    .summary-metric .eyebrow {
+      margin-bottom: 0;
+      font-weight: 700;
+    }
+
+    .summary-metric .big-number {
+      font-size: clamp(2rem, 3vw, 2.8rem);
+      font-weight: 800;
+    }
+
+    .summary-metric .stat-caption {
+      max-width: none;
+      font-size: 0.94rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0;
+    }
+
+    .eyebrow {
+      font-size: 0.76rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.95rem;
+    }
+
+    .hero-grid h1,
+    .stream-head h2,
+    .side-head h2,
+    .drawer-head h2 {
+      margin: 0;
+      font-family: var(--fontDisplay);
+      letter-spacing: 0.01em;
+      font-weight: 700;
+    }
+
+    .latest-time {
+      font-family: var(--fontDisplay);
+      font-size: clamp(2.8rem, 6vw, 4.8rem);
+      line-height: 0.96;
+      margin: 0.2rem 0 0.4rem;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      color: var(--muted);
+      margin-bottom: 0.85rem;
+    }
+
+    .transcript-preview {
+      margin: 0 0 1.1rem;
+      max-width: 70ch;
+      font-size: 1.02rem;
+      line-height: 1.6;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .chip-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0.45rem 0.7rem;
+      border-radius: 999px;
+      background: var(--chipBg);
+      color: var(--chipText);
+      font-size: 0.82rem;
+      border: 1px solid color-mix(in srgb, var(--border) 82%, transparent 18%);
+      white-space: nowrap;
+    }
+
+    .chip strong {
+      font-weight: 700;
+    }
+
+    .chip.good {
+      color: var(--good);
+      border-color: color-mix(in srgb, var(--good) 26%, transparent 74%);
+      background: color-mix(in srgb, var(--good) 9%, transparent 91%);
+    }
+
+    .chip.warn {
+      color: var(--warn);
+      border-color: color-mix(in srgb, var(--warn) 30%, transparent 70%);
+      background: color-mix(in srgb, var(--warn) 10%, transparent 90%);
+    }
+
+    .chip.bad {
+      color: var(--bad);
+      border-color: color-mix(in srgb, var(--bad) 28%, transparent 72%);
+      background: color-mix(in srgb, var(--bad) 10%, transparent 90%);
+    }
+
+    .chip.muted {
+      color: var(--muted);
+      background: color-mix(in srgb, var(--panelAlt) 88%, transparent 12%);
+    }
+
+    .primary-button,
+    .secondary-button,
+    .ghost-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 46px;
+      padding: 0.8rem 1rem;
+      border-radius: 15px;
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+
+    .primary-button {
+      background: var(--text);
+      color: var(--bg);
+    }
+
+    .secondary-button {
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--panelAlt) 84%, transparent 16%);
+      color: var(--text);
+    }
+
+    .ghost-button {
+      color: var(--muted);
+      border: 1px dashed color-mix(in srgb, var(--border) 78%, transparent 22%);
+      background: transparent;
+    }
+
+    .primary-button:hover,
+    .secondary-button:hover,
+    .ghost-button:hover {
+      transform: translateY(-1px);
+    }
+
+    .stat-tile {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 232px;
+    }
+
+    .stat-tile .big-number {
+      font-family: var(--fontDisplay);
+      font-size: clamp(2.4rem, 4vw, 3.7rem);
+      line-height: 1;
+      margin: 0.2rem 0;
+    }
+
+    .stat-tile .stat-caption {
+      max-width: 24ch;
+      color: var(--muted);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.92fr);
+      gap: 18px;
+      align-items: start;
+      margin-top: 18px;
+    }
+
+    .stream-shell {
+      display: grid;
+      gap: 16px;
+    }
+
+    .stream-head,
+    .context-strip,
+    .side-card {
+      padding: 22px;
+    }
+
+    .stream-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 18px;
+    }
+
+    .stream-head p,
+    .side-head p,
+    .drawer-head p {
+      margin: 0.4rem 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .stream-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .stream-meta .chip {
+      background: color-mix(in srgb, var(--panelAlt) 90%, transparent 10%);
+    }
+
+    .context-strip {
+      min-height: 118px;
+    }
+
+    .context-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .context-label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .context-label strong {
+      font-size: 0.98rem;
+    }
+
+    .context-label span {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .context-lane {
+      position: relative;
+      height: 48px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--panelAlt) 88%, transparent 12%);
+      overflow: hidden;
+    }
+
+    .context-segment,
+    .context-replay,
+    .alarm-tick,
+    .note-marker {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+    }
+
+    .context-segment {
+      opacity: 0.9;
+    }
+
+    .context-segment.run {
+      background: color-mix(in srgb, var(--good) 18%, transparent 82%);
+    }
+
+    .context-segment.slow {
+      background: color-mix(in srgb, var(--warn) 22%, transparent 78%);
+    }
+
+    .context-segment.stop,
+    .context-segment.fault {
+      background: color-mix(in srgb, var(--bad) 24%, transparent 76%);
+    }
+
+    .context-replay {
+      top: 6px;
+      bottom: 6px;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent 55%);
+      background: color-mix(in srgb, var(--accent) 15%, transparent 85%);
+      z-index: 2;
+    }
+
+    .alarm-tick {
+      top: 6px;
+      width: 2px;
+      bottom: 28px;
+      background: var(--bad);
+      z-index: 3;
+      opacity: 0.75;
+    }
+
+    .note-marker {
+      top: 26px;
+      height: 16px;
+      width: 16px;
+      margin-left: -8px;
+      border-radius: 50%;
+      border: 2px solid color-mix(in srgb, var(--bg) 88%, transparent 12%);
+      background: var(--text);
+      z-index: 4;
+      transition: transform 140ms ease, background 140ms ease;
+    }
+
+    .note-marker:hover,
+    .note-marker.is-active {
+      transform: translateY(-2px) scale(1.06);
+      background: var(--accent);
+    }
+
+    .context-legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.81rem;
+    }
+
+    .context-legend span::before {
+      content: "";
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      margin-right: 6px;
+      border-radius: 50%;
+      vertical-align: middle;
+    }
+
+    .context-legend .run::before {
+      background: color-mix(in srgb, var(--good) 60%, white 40%);
+    }
+
+    .context-legend .slow::before {
+      background: color-mix(in srgb, var(--warn) 68%, white 32%);
+    }
+
+    .context-legend .stop::before {
+      background: color-mix(in srgb, var(--bad) 68%, white 32%);
+    }
+
+    .notes-stream {
+      display: grid;
+      gap: 14px;
+    }
+
+    .note-card {
+      text-align: left;
+      padding: 20px 22px;
+      border-radius: 24px;
+      border: 1px solid var(--border);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 36%),
+        color-mix(in srgb, var(--panel) 94%, transparent 6%);
+      box-shadow: 0 12px 34px rgba(18, 35, 44, 0.08);
+      transition: transform 150ms ease, border-color 150ms ease, opacity 150ms ease, box-shadow 150ms ease;
+    }
+
+    .note-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .note-card.is-selected {
+      border-color: color-mix(in srgb, var(--accent) 56%, transparent 44%);
+      box-shadow: 0 20px 42px color-mix(in srgb, var(--accent) 16%, transparent 84%);
+    }
+
+    .note-card.is-dimmed {
+      opacity: 0.42;
+    }
+
+    .note-card.is-resolved {
+      opacity: 0.62;
+      background: color-mix(in srgb, var(--panelAlt) 84%, transparent 16%);
+    }
+
+    .note-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: start;
+      margin-bottom: 0.9rem;
+    }
+
+    .note-ident {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      color: var(--muted);
+    }
+
+    .note-time {
+      font-family: var(--fontDisplay);
+      font-size: 1.55rem;
+      color: var(--text);
+    }
+
+    .note-snippet {
+      margin: 0 0 1rem;
+      font-size: 0.98rem;
+      line-height: 1.6;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .note-foot {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .empty-card {
+      padding: 28px;
+      border-radius: 24px;
+      border: 1px dashed var(--border);
+      background: color-mix(in srgb, var(--panelAlt) 70%, transparent 30%);
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .side-column {
+      display: grid;
+      gap: 16px;
+    }
+
+    .side-card {
+      min-height: 250px;
+      width: 100%;
+    }
+
+    .side-head {
+      margin-bottom: 1rem;
+    }
+
+    .attention-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .attention-item {
+      width: 100%;
+      text-align: left;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--panelAlt) 88%, transparent 12%);
+      transition: transform 140ms ease, border-color 140ms ease;
+    }
+
+    .attention-item:hover {
+      transform: translateY(-1px);
+    }
+
+    .attention-item.is-active {
+      border-color: color-mix(in srgb, var(--accent) 56%, transparent 44%);
+      background: color-mix(in srgb, var(--accentSoft) 60%, var(--panelAlt) 40%);
+    }
+
+    .attention-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 0.35rem;
+      font-weight: 600;
+    }
+
+    .attention-item p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 0.92rem;
+    }
+
+    .attention-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 34px;
+      min-height: 34px;
+      border-radius: 999px;
+      background: var(--text);
+      color: var(--bg);
+      font-size: 0.86rem;
+      padding: 0 10px;
+    }
+
+    .summary-body {
+      margin: 0;
+      font-size: 0.98rem;
+      line-height: 1.75;
+    }
+
+    .summary-body.is-collapsed {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .meta-row,
+    .summary-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 1rem;
+    }
+
+    .meta-row {
+      color: var(--muted);
+      font-size: 0.87rem;
+    }
+
+    .meta-row .chip {
+      background: color-mix(in srgb, var(--panelAlt) 92%, transparent 8%);
+    }
+
+    .summary-actions .secondary-button,
+    .summary-actions .ghost-button {
+      min-height: 42px;
+      padding-inline: 0.9rem;
+    }
+
+    .drawer-shell {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 30;
+    }
+
+    .drawer-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(5, 10, 14, 0.4);
+      opacity: 0;
+      transition: opacity 180ms ease;
+    }
+
+    .drawer-panel {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      bottom: 16px;
+      width: min(520px, calc(100vw - 32px));
+      border-radius: 28px;
+      border: 1px solid var(--border);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 30%),
+        var(--panel);
+      box-shadow: var(--shadow);
+      transform: translateX(104%);
+      transition: transform 200ms ease;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .drawer-shell.is-open {
+      pointer-events: auto;
+    }
+
+    .drawer-shell.is-open .drawer-backdrop {
+      opacity: 1;
+    }
+
+    .drawer-shell.is-open .drawer-panel {
+      transform: translateX(0);
+    }
+
+    .drawer-scroll {
+      padding: 22px 22px 26px;
+      overflow: auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    .drawer-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 16px;
+    }
+
+    .drawer-close {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--panelAlt) 86%, transparent 14%);
+      flex-shrink: 0;
+    }
+
+    .drawer-block {
+      display: grid;
+      gap: 10px;
+      padding: 18px;
+      border-radius: 22px;
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--panelAlt) 84%, transparent 16%);
+    }
+
+    .drawer-block h3 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .tag-editor {
+      display: grid;
+      gap: 12px;
+    }
+
+    .tag-row {
+      display: grid;
+      gap: 8px;
+    }
+
+    .tag-row span {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .tag-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag-toggle {
+      padding: 0.45rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--chipBg);
+      color: var(--chipText);
+      font-size: 0.82rem;
+    }
+
+    .tag-toggle.is-active {
+      background: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+    }
+
+    .tag-toggle.is-captured {
+      background: color-mix(in srgb, var(--accent) 15%, transparent 85%);
+      border-color: color-mix(in srgb, var(--accent) 40%, transparent 60%);
+      color: var(--accent);
+    }
+
+    .tag-toggle.is-captured.is-active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .tag-custom-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .tag-custom-input {
+      flex: 1;
+      min-width: 0;
+      padding: 0.35rem 0.65rem;
+      border-radius: 999px;
+      border: 1px dashed var(--border);
+      background: transparent;
+      color: var(--text);
+      font-size: 0.82rem;
+      outline: none;
+    }
+
+    .tag-custom-input:focus {
+      border-color: var(--accent);
+    }
+
+    .tag-custom-input::placeholder {
+      color: var(--muted);
+    }
+
+    .tag-custom-add {
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      border: 1px solid var(--accent);
+      background: transparent;
+      color: var(--accent);
+      font-size: 0.82rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .tag-custom-add:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-danger {
+      border-color: #d65848 !important;
+      color: #d65848 !important;
+    }
+
+    .btn-danger:hover {
+      background: #d65848 !important;
+      color: #fff !important;
+    }
+
+    .mini-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .mini-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: color-mix(in srgb, var(--panel) 92%, transparent 8%);
+      border: 1px solid var(--border);
+      font-size: 0.92rem;
+    }
+
+    .mini-item strong {
+      font-weight: 700;
+    }
+
+    .thread-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .thread-item {
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--panel) 92%, transparent 8%);
+    }
+
+    .thread-item.is-current {
+      border-color: color-mix(in srgb, var(--accent) 56%, transparent 44%);
+    }
+
+    .thread-item p {
+      margin: 0.45rem 0 0;
+      color: var(--muted);
+      line-height: 1.45;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .drawer-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+
+    @media (max-width: 1200px) {
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar-center {
+        justify-content: flex-start;
+      }
+
+      .topbar-right {
+        grid-template-columns: 1fr;
+      }
+
+      .status-stack {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-metrics-card,
+      .summary-hero {
+        min-height: 0;
+      }
+
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .side-column {
+        position: static;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .app-shell {
+        width: min(100vw - 20px, 100%);
+        padding-top: 10px;
+      }
+
+      .hero-grid,
+      .topbar-left,
+      .topbar-center,
+      .stream-head,
+      .meta-row,
+      .summary-actions,
+      .drawer-actions,
+      .context-head {
+        gap: 10px;
+      }
+
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-hero {
+        grid-column: 1 / -1;
+      }
+
+      .summary-tag-board {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-metrics-card {
+        grid-template-rows: none;
+      }
+
+      .summary-hero-head {
+        flex-direction: column;
+      }
+
+      .summary-hero-tools {
+        align-items: flex-start;
+        min-width: 0;
+      }
+
+      .topbar,
+      .stream-head,
+      .context-strip,
+      .side-card,
+      .drawer-scroll,
+      .hero-card,
+      .stat-tile {
+        padding: 18px;
+      }
+
+      .latest-time {
+        font-size: clamp(2.4rem, 18vw, 3.8rem);
+      }
+
+      .status-stack {
+        flex-direction: column;
+      }
+
+      .drawer-panel {
+        inset: 0;
+        width: 100%;
+        border-radius: 0;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .summary-expand {
+        display: inline-flex;
+      }
+    }
+
+    @media (min-width: 621px) {
+      .summary-expand {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="panel topbar">
+      <div class="topbar-left">
+        <div class="brand">
+          <div class="brand-wordmark">ShiftVoice</div>
+          <div class="brand-subtle">Operator Notes</div>
+        </div>
+        <div class="control-group">
+          <div class="control">
+            <label for="siteSelect">Site</label>
+            <select id="siteSelect">
+              <option>North Hall</option>
+              <option>South Hall</option>
+              <option>All Sites</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="lineSelect">Line</label>
+            <select id="lineSelect">
+              <option>All Lines</option>
+              <option>Line 1</option>
+              <option>Line 2</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="operatorSelect">Operator</label>
+            <select id="operatorSelect">
+              <option>All Operators</option>
+              <option>AB</option>
+              <option>MK</option>
+              <option>JR</option>
+              <option>LC</option>
+              <option>SP</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="topbar-center">
+        <div>
+          <label class="visually-hidden" for="timeRange">Time range</label>
+          <div class="segmented" id="timeRange">
+            <button type="button" data-action="set-range" data-range="Last 60m">Last 60m</button>
+            <button type="button" data-action="set-range" data-range="4h">4h</button>
+            <button type="button" class="is-active" data-action="set-range" data-range="Today">Today</button>
+          </div>
+        </div>
+        <div class="control shift-inline">
+          <label for="shiftSelect">Shift</label>
+          <select id="shiftSelect">
+            <option>All</option>
+            <option>A</option>
+            <option>B</option>
+            <option>C</option>
+          </select>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="search-block">
+          <label for="searchInput">Search</label>
+          <input id="searchInput" type="search" placeholder="Search notes, tags, transcript" autocomplete="off">
+          <div class="helper-text">Search highlights matches and dims the rest</div>
+        </div>
+        <div class="status-stack">
+          <div class="status-pill" id="statusPill"></div>
+          <button type="button" class="theme-toggle" id="themeToggle" data-action="toggle-theme">
+            <span>Light / Dark</span>
+            <small id="themeLabel">Light</small>
+          </button>
+          <button type="button" class="theme-toggle" data-action="clear-captured-notes" id="clearCapturedBtn" style="border-color:#d65848;color:#d65848;">
+            <span id="clearCapturedLabel">Reset demo</span>
+          </button>
+        </div>
+      </div>
+    </header>
+    <section class="hero-grid" id="heroGrid"></section>
+    <section class="main-grid">
+      <div class="stream-shell">
+        <div class="notes-stream" id="notesStream"></div>
+      </div>
+      <aside class="side-column">
+        <section class="panel side-card" id="needsAttentionCard"></section>
+      </aside>
+    </section>
+  </div>
+  <div class="drawer-shell" id="drawerShell" aria-hidden="true">
+    <div class="drawer-backdrop" data-action="close-drawer"></div>
+    <aside class="drawer-panel" aria-label="Operator note details">
+      <div class="drawer-scroll" id="drawerContent"></div>
+    </aside>
+  </div>
+  <script>
+    const themeKey = "tex-operator-notes-theme";
+    const systemStatus = { voiceConnected: true, lastNoteSecondsAgo: 12 };
+
+    function snapshots(temp, pressure, speed) {
+      return [
+        { name: "Seal Temp", value: temp, unit: "C" },
+        { name: "Jaw Pressure", value: pressure, unit: "bar" },
+        { name: "Speed", value: speed, unit: "packs/min" }
+      ];
+    }
+
+    const mockNotes = [
+      {
+        id: "n01",
+        ts: "2026-04-03T07:18:00",
+        site: "North Hall",
+        line: "Line 1",
+        operator: "AB",
+        asset: "Line 1 / Sealer",
+        transcriptShort: "Seal edge looked light on the first cartons after warm-up, so jaw temperature went up two degrees and the next stack is under watch.",
+        transcriptFull: "Seal edge looked light on the first cartons after warm-up. I raised jaw temperature by two degrees and kept the next stack aside for comparison. Please watch the first five packs after the next speed bump because the edge was still pale on one lane before it settled.",
+        tags: { reason: "temperature drift", component: "sealer jaw", action: "raised setpoint" },
+        enriched: true,
+        confidence: "med",
+        context: {
+          snapshots: snapshots(178, 5.2, 142),
+          alarms: [
+            { ts: "2026-04-03T07:14:00", code: "TLOW-02" },
+            { ts: "2026-04-03T07:16:00", code: "TEMP-17" },
+            { ts: "2026-04-03T07:18:00", code: "CLR-01" }
+          ]
+        },
+        flags: { needsFollowUp: true, missingAsset: false, untagged: false },
+        shift: "A"
+      },
+      {
+        id: "n02",
+        ts: "2026-04-03T07:46:00",
+        site: "North Hall",
+        line: "Line 1",
+        operator: "MK",
+        asset: "Line 1 / Film Feed",
+        transcriptShort: "Film started walking left at the dancer arm during roll settle, guide was centered and tension came back after two passes.",
+        transcriptFull: "Film started walking left at the dancer arm during roll settle. I centered the guide and ran two short passes before tension came back into range. Keep an eye on the next splice because the roll felt twitchy when the tail cleared.",
+        tags: { reason: "film tracking", component: "film dancer", action: "centered film" },
+        enriched: true,
+        confidence: "high",
+        context: {
+          snapshots: snapshots(176, 5.0, 146),
+          alarms: [
+            { ts: "2026-04-03T07:42:00", code: "FTRK-04" },
+            { ts: "2026-04-03T07:44:00", code: "ROLL-09" },
+            { ts: "2026-04-03T07:46:00", code: "CLR-01" }
+          ]
+        },
+        flags: { needsFollowUp: false, missingAsset: false, untagged: false },
+        shift: "A"
+      },
+      {
+        id: "n03",
+        ts: "2026-04-03T08:12:00",
+        site: "North Hall",
+        line: "Line 1",
+        operator: "JR",
+        asset: null,
+        transcriptShort: "Heard a chatter near discharge and saw a short stop, but the station was not called out clearly on the headset note.",
+        transcriptFull: "Heard a chatter near discharge and saw a short stop, but the station was not called out clearly on the headset note. I could not confirm which machine was involved before production resumed. This one needs a station check because the note came through without a clean asset reference.",
+        tags: { reason: null, component: null, action: null },
+        enriched: false,
+        confidence: "low",
+        context: {
+          snapshots: snapshots(174, 4.9, 138),
+          alarms: [
+            { ts: "2026-04-03T08:10:00", code: "UNK-03" },
+            { ts: "2026-04-03T08:11:00", code: "STOP-14" },
+            { ts: "2026-04-03T08:12:00", code: "CLR-02" }
+          ]
+        },
+        flags: { needsFollowUp: true, missingAsset: true, untagged: true },
+        shift: "A"
+      },
+      {
+        id: "n04",
+        ts: "2026-04-03T08:54:00",
+        site: "South Hall",
+        line: "Line 2",
+        operator: "LC",
+        asset: "Line 2 / Cartoner",
+        transcriptShort: "False reject traced to a dusty photoeye on the cartoner, lens was wiped and the reject stream cleared on the next run.",
+        transcriptFull: "False reject traced to a dusty photoeye on the cartoner. I wiped the lens and watched the next run of cartons clear without another false reject. Please recheck after the next changeover because the dust build-up came back quickly yesterday as well.",
+        tags: { reason: "sensor fouling", component: "cartoner photoeye", action: "cleaned sensor" },
+        enriched: true,
+        confidence: "high",
+        context: {
+          snapshots: snapshots(173, 5.1, 151),
+          alarms: [
+            { ts: "2026-04-03T08:50:00", code: "PEYE-12" },
+            { ts: "2026-04-03T08:52:00", code: "REJ-04" },
+            { ts: "2026-04-03T08:54:00", code: "CLR-01" }
+          ]
+        },
+        flags: { needsFollowUp: false, missingAsset: false, untagged: false },
+        shift: "A"
+      },
+      {
+        id: "n05",
+        ts: "2026-04-03T09:33:00",
+        site: "North Hall",
+        line: "Line 1",
+        operator: "AB",
+        asset: "Line 1 / Sealer",
+        transcriptShort: "Seal drift showed back up on lane three, thermocouple was checked and the next warm packs looked cleaner but not fully stable.",
+        transcriptFull: "Seal drift showed back up on lane three. I verified the thermocouple and the next warm packs looked cleaner, but the edge still wandered a little at higher speed. Leave this flagged for follow-up because the drift is repeating on the same section of the jaw.",
+        tags: { reason: "temperature drift", component: "sealer jaw", action: "verified thermocouple" },
+        enriched: true,
+        confidence: "med",
+        context: {
+          snapshots: snapshots(179, 5.3, 149),
+          alarms: [
+            { ts: "2026-04-03T09:28:00", code: "TEMP-17" },
+            { ts: "2026-04-03T09:31:00", code: "SEAL-22" },
+            { ts: "2026-04-03T09:33:00", code: "CLR-03" }
+          ]
+        },
+        flags: { needsFollowUp: true, missingAsset: false, untagged: false },
+        shift: "A"
+      },
+      {
+        id: "n06",
+        ts: "2026-04-03T10:18:00",
+        site: "South Hall",
+        line: "Line 2",
+        operator: "MK",
+        asset: "Line 2 / Infeed",
+        transcriptShort: "Short stop came from cartons skewing at the infeed guide, skew was cleared and the queue ran clean after guide pressure was reset.",
+        transcriptFull: "Short stop came from cartons skewing at the infeed guide. I cleared the skew and reset guide pressure before restarting. The queue ran clean after that, but the guide should be checked again at the next case change because the cartons were leaning in the same corner.",
+        tags: { reason: "jam", component: "infeed guide", action: "cleared skew" },
+        enriched: true,
+        confidence: "high",
+        context: {
+          snapshots: snapshots(171, 5.0, 139),
+          alarms: [
+            { ts: "2026-04-03T10:15:00", code: "JAM-11" },
+            { ts: "2026-04-03T10:17:00", code: "GUID-02" },
+            { ts: "2026-04-03T10:18:00", code: "CLR-01" }
+          ]
+        },
+        flags: { needsFollowUp: false, missingAsset: false, untagged: false },
+        shift: "A"
+      },
+      {
+        id: "n07",
+        ts: "2026-04-03T11:42:00",
+        site: "North Hall",
+        line: "Line 2",
+        operator: "SP",
+        asset: "Line 2 / Cartoner",
+        transcriptShort: "Glue flap was not folding clean, fold rail moved a few millimeters and the carton shape came back into line after a slow pass.",
+        transcriptFull: "Glue flap was not folding clean on the cartoner. I moved the fold rail a few millimeters and ran a slow pass until the carton shape came back into line. Leave a note for the next crew to confirm the rail has not walked back after lunch.",
+        tags: { reason: "alignment drift", component: "fold rail", action: "adjusted rail" },
+        enriched: true,
+        confidence: "med",
+        context: {
+          snapshots: snapshots(172, 5.1, 144),
+          alarms: [
+            { ts: "2026-04-03T11:37:00", code: "FOLD-07" },
+            { ts: "2026-04-03T11:40:00", code: "SHPE-09" },
+            { ts: "2026-04-03T11:42:00", code: "CLR-02" }
+          ]
+        },
+        flags: { needsFollowUp: false, missingAsset: false, untagged: false },
+        shift: "A"
+      },
+      {
+        id: "n08",
+        ts: "2026-04-03T12:08:00",
+        site: "North Hall",
+        line: "Line 1",
+        operator: "AB",
+        asset: "Line 1 / Sealer",
+        transcriptShort: "Seal edge stayed clean after the temperature change, but the same alarm flashed once when speed was lifted back to target.",
+        transcriptFull: "Seal edge stayed clean after the temperature change, but the same alarm flashed once when speed was lifted back to target. I kept the line running because the next packs were acceptable, yet the repeat alarm should stay on the watchlist for the afternoon crew.",
+        tags: { reason: "temperature drift", component: "sealer jaw", action: "monitored restart" },
+        enriched: true,
+        confidence: "high",
+        context: {
+          snapshots: snapshots(180, 5.4, 154),
+          alarms: [
+            { ts: "2026-04-03T12:04:00", code: "TEMP-17" },
+            { ts: "2026-04-03T12:07:00", code: "WARN-05" },
+            { ts: "2026-04-03T12:08:00", code: "CLR-01" }
+          ]
+        },
+        flags: { needsFollowUp: false, missingAsset: false, untagged: false },
+        shift: "A"
+      },
+      {
+        id: "n09",
+        ts: "2026-04-03T12:47:00",
+        site: "North Hall",
+        line: "Line 2",
+        operator: "MK",
+        asset: "Line 2 / Cartoner",
+        transcriptShort: "Photoeye flickered during label change and a second wipe cleared the false reject right away.",
+        transcriptFull: "Photoeye flickered during the label change and gave a false reject. A second wipe cleared it right away, but the eye is collecting dust faster than normal today. Keep sensor cleaning in the loop until the enclosure gets checked.",
+        tags: { reason: "sensor fouling", component: "cartoner photoeye", action: "cleaned sensor" },
+        enriched: true,
+        confidence: "med",
+        context: {
+          snapshots: snapshots(173, 5.0, 149),
+          alarms: [
+            { ts: "2026-04-03T12:43:00", code: "PEYE-12" },
+            { ts: "2026-04-03T12:45:00", code: "REJ-04" },
+            { ts: "2026-04-03T12:47:00", code: "CLR-02" }
+          ]
+        },
+        flags: { needsFollowUp: false, missingAsset: false, untagged: false },
+        shift: "A"
+      },
+      {
+        id: "n10",
+        ts: "2026-04-03T13:35:00",
+        site: "South Hall",
+        line: "Line 1",
+        operator: "JR",
+        asset: "Line 1 / Wrapper",
+        transcriptShort: "Wrapper slowed when a splice bump came through, splice tail was trimmed and the film settled on the next cycle.",
+        transcriptFull: "Wrapper slowed when a splice bump came through and the film tail lifted. I trimmed the splice tail and the film settled on the next cycle. Mention it to maintenance if the next roll shows the same bump because the roller looked sharp on one edge.",
+        tags: { reason: "film tracking", component: "splice roller", action: "trimmed splice" },
+        enriched: true,
+        confidence: "high",
+        context: {
+          snapshots: snapshots(175, 5.1, 147),
+          alarms: [
+            { ts: "2026-04-03T13:30:00", code: "SPLC-05" },
+            { ts: "2026-04-03T13:33:00", code: "FTRK-04" },
+            { ts: "2026-04-03T13:35:00", code: "CLR-01" }
+          ]
+        },
+        flags: { needsFollowUp: false, missingAsset: false, untagged: false },
+        shift: "A"
+      },
+      {
+        id: "n11",
+        ts: "2026-04-03T14:31:00",
+        site: "North Hall",
+        line: "Line 1",
+        operator: "LC",
+        asset: "Line 1 / Sealer",
+        transcriptShort: "After handover the sealer dipped again on the first five packs, heat zone was nudged and jaw pressure checked before speed recovered.",
+        transcriptFull: "After handover the sealer dipped again on the first five packs. I nudged the heat zone and checked jaw pressure before speed recovered, but this is the same drift we saw earlier in the shift. Keep it open until the next sample confirms the fix is holding.",
+        tags: { reason: "temperature drift", component: "sealer jaw", action: "raised setpoint" },
+        enriched: true,
+        confidence: "med",
+        context: {
+          snapshots: snapshots(177, 5.3, 143),
+          alarms: [
+            { ts: "2026-04-03T14:28:00", code: "TEMP-17" },
+            { ts: "2026-04-03T14:30:00", code: "SEAL-22" },
+            { ts: "2026-04-03T14:31:00", code: "CLR-02" }
+          ]
+        },
+        flags: { needsFollowUp: true, missingAsset: false, untagged: false },
+        shift: "B"
+      },
+      {
+        id: "n12",
+        ts: "2026-04-03T14:48:00",
+        site: "North Hall",
+        line: "Line 2",
+        operator: "AB",
+        asset: "Line 2 / Cartoner",
+        transcriptShort: "Cartoner photoeye needed a second wipe and the false reject cleared once dust was pulled off the face.",
+        transcriptFull: "Cartoner photoeye needed a second wipe and the false reject cleared once dust was pulled off the face. This is the second photoeye note today, so leave sensor cleaning on the watchlist until the enclosure gets checked during the next break.",
+        tags: { reason: "sensor fouling", component: "cartoner photoeye", action: "cleaned sensor" },
+        enriched: true,
+        confidence: "high",
+        context: {
+          snapshots: snapshots(173, 5.0, 151),
+          alarms: [
+            { ts: "2026-04-03T14:44:00", code: "PEYE-12" },
+            { ts: "2026-04-03T14:46:00", code: "REJ-04" },
+            { ts: "2026-04-03T14:48:00", code: "CLR-01" }
+          ]
+        },
+        flags: { needsFollowUp: false, missingAsset: false, untagged: false },
+        shift: "B"
+      },
+      {
+        id: "n13",
+        ts: "2026-04-03T15:02:00",
+        site: "North Hall",
+        line: "Line 1",
+        operator: "MK",
+        asset: "Line 1 / Film Feed",
+        transcriptShort: "Film tension settled after the guide tweak, but there is still a sharp snap sound when the roll change finishes.",
+        transcriptFull: "Film tension settled after the guide tweak, but there is still a sharp snap sound when the roll change finishes. Output stayed stable after I tightened the guide, though the next roll change should be watched in case the dancer is over-correcting.",
+        tags: { reason: "film tracking", component: "film dancer", action: "tightened guide" },
+        enriched: true,
+        confidence: "med",
+        context: {
+          snapshots: snapshots(176, 5.1, 150),
+          alarms: [
+            { ts: "2026-04-03T14:58:00", code: "FTRK-04" },
+            { ts: "2026-04-03T15:00:00", code: "ROLL-09" },
+            { ts: "2026-04-03T15:02:00", code: "CLR-03" }
+          ]
+        },
+        flags: { needsFollowUp: false, missingAsset: false, untagged: false },
+        shift: "B"
+      },
+      {
+        id: "n14",
+        ts: "2026-04-03T15:11:00",
+        site: "South Hall",
+        line: "Line 2",
+        operator: "SP",
+        asset: null,
+        transcriptShort: "Could not confirm the station from the voice note, but there was a brief stop with cartons bunching at transfer before flow returned.",
+        transcriptFull: "Could not confirm the station from the voice note, but there was a brief stop with cartons bunching at transfer before flow returned. I requested a station check because the note came through low and clipped. Please tag the asset if this happens again so the follow-up lands faster.",
+        tags: { reason: "jam", component: null, action: "requested station check" },
+        enriched: false,
+        confidence: "low",
+        context: {
+          snapshots: snapshots(170, 4.8, 136),
+          alarms: [
+            { ts: "2026-04-03T15:08:00", code: "STOP-14" },
+            { ts: "2026-04-03T15:10:00", code: "JAM-11" },
+            { ts: "2026-04-03T15:11:00", code: "CLR-02" }
+          ]
+        },
+        flags: { needsFollowUp: true, missingAsset: true, untagged: false },
+        shift: "B"
+      },
+      {
+        id: "n15",
+        ts: "2026-04-03T15:24:00",
+        site: "North Hall",
+        line: "Line 1",
+        operator: "AB",
+        asset: "Line 1 / Sealer",
+        transcriptShort: "Seal line looks stable now, a sample from the last warm pack is held and QC will compare it if the drift returns.",
+        transcriptFull: "Seal line looks stable now. I held a sample from the last warm pack and asked QC to compare it if the drift returns later in the shift. No fresh alarm on the last run, but keep the earlier repeat drift in mind when the next speed change comes through.",
+        tags: { reason: "temperature drift", component: "sealer jaw", action: "collected sample" },
+        enriched: true,
+        confidence: "high",
+        context: {
+          snapshots: snapshots(179, 5.3, 154),
+          alarms: [
+            { ts: "2026-04-03T15:18:00", code: "TEMP-17" },
+            { ts: "2026-04-03T15:21:00", code: "WARN-05" },
+            { ts: "2026-04-03T15:24:00", code: "CLR-01" }
+          ]
+        },
+        flags: { needsFollowUp: false, missingAsset: false, untagged: false },
+        shift: "B"
+      }
+    ];
+
+    const contextStates = [
+      { site: "North Hall", line: "Line 1", start: "2026-04-03T07:00:00", end: "2026-04-03T07:40:00", state: "run" },
+      { site: "North Hall", line: "Line 1", start: "2026-04-03T07:40:00", end: "2026-04-03T08:10:00", state: "slow" },
+      { site: "North Hall", line: "Line 1", start: "2026-04-03T08:10:00", end: "2026-04-03T08:22:00", state: "fault" },
+      { site: "North Hall", line: "Line 1", start: "2026-04-03T08:22:00", end: "2026-04-03T09:50:00", state: "run" },
+      { site: "North Hall", line: "Line 1", start: "2026-04-03T09:50:00", end: "2026-04-03T10:08:00", state: "slow" },
+      { site: "North Hall", line: "Line 1", start: "2026-04-03T10:08:00", end: "2026-04-03T14:20:00", state: "run" },
+      { site: "North Hall", line: "Line 1", start: "2026-04-03T14:20:00", end: "2026-04-03T15:08:00", state: "slow" },
+      { site: "North Hall", line: "Line 1", start: "2026-04-03T15:08:00", end: "2026-04-03T15:30:00", state: "run" },
+      { site: "North Hall", line: "Line 2", start: "2026-04-03T11:20:00", end: "2026-04-03T11:48:00", state: "slow" },
+      { site: "North Hall", line: "Line 2", start: "2026-04-03T11:48:00", end: "2026-04-03T12:38:00", state: "run" },
+      { site: "North Hall", line: "Line 2", start: "2026-04-03T12:38:00", end: "2026-04-03T12:52:00", state: "slow" },
+      { site: "North Hall", line: "Line 2", start: "2026-04-03T12:52:00", end: "2026-04-03T14:40:00", state: "run" },
+      { site: "North Hall", line: "Line 2", start: "2026-04-03T14:40:00", end: "2026-04-03T14:54:00", state: "slow" },
+      { site: "North Hall", line: "Line 2", start: "2026-04-03T14:54:00", end: "2026-04-03T15:30:00", state: "run" },
+      { site: "South Hall", line: "Line 1", start: "2026-04-03T13:24:00", end: "2026-04-03T13:39:00", state: "slow" },
+      { site: "South Hall", line: "Line 1", start: "2026-04-03T13:39:00", end: "2026-04-03T15:30:00", state: "run" },
+      { site: "South Hall", line: "Line 2", start: "2026-04-03T08:42:00", end: "2026-04-03T08:56:00", state: "slow" },
+      { site: "South Hall", line: "Line 2", start: "2026-04-03T08:56:00", end: "2026-04-03T10:14:00", state: "run" },
+      { site: "South Hall", line: "Line 2", start: "2026-04-03T10:14:00", end: "2026-04-03T10:21:00", state: "stop" },
+      { site: "South Hall", line: "Line 2", start: "2026-04-03T10:21:00", end: "2026-04-03T15:06:00", state: "run" },
+      { site: "South Hall", line: "Line 2", start: "2026-04-03T15:06:00", end: "2026-04-03T15:14:00", state: "fault" },
+      { site: "South Hall", line: "Line 2", start: "2026-04-03T15:14:00", end: "2026-04-03T15:30:00", state: "run" }
+    ];
+
+    const shiftSummaries = {
+      "Last 60m": [
+        "In the last hour, operator notes clustered around {{themeA}}, {{themeB}}, and {{themeC}} across {{assetScope}}. Operators already {{actionA}} and {{actionB}}, and those steps steadied production for short stretches, but {{followUpA}} and {{followUpB}} are still open before the event can be called closed. {{repeatedIssue}} showed up more than once, so this looks like a repeated condition rather than a single isolated stop. The notes also carry one weaker transcript and one record with incomplete asset context, which makes the next round of tagging important. Watch {{riskLine}} over the next cycle and compare the most recent note with the earlier interventions to confirm whether the fixes are holding or only masking drift.",
+        "Recent notes read like a tight loop around {{themeA}}, {{themeB}}, and {{themeC}} on {{assetScope}}. The crew has already {{actionA}} and {{actionB}}, which helped calm the line, yet {{followUpA}} and {{followUpB}} remain unresolved. {{repeatedIssue}} is repeating inside the same short window, so the pattern deserves more attention than a one-off nuisance. One transcript came through at lower confidence and another note still lacks a precise asset callout, making clean follow-through important. Keep {{riskLine}} on the watchlist during the next run-up, and use the newest note as the reference point for whether the line is improving or simply pausing between similar symptoms.",
+        "The current hour is mostly defined by {{themeA}}, {{themeB}}, and {{themeC}} across {{assetScope}}. Operators have already {{actionA}} and {{actionB}}, and those responses appear to be buying time, but {{followUpA}} and {{followUpB}} still need ownership before the window feels settled. {{repeatedIssue}} repeated enough times to stand out, which points to a stubborn condition instead of a brief interruption. The note stream also shows a small confidence dip and one asset gap, so documentation discipline matters as much as the mechanical checks. Watch {{riskLine}} through the next cycle and compare it with the latest stable note before assuming the issue is fully behind the shift."
+      ],
+      "4h": [
+        "Across the last four hours, operator notes point to {{themeA}}, {{themeB}}, and {{themeC}} as the main recurring themes across {{assetScope}}. Teams already {{actionA}} and {{actionB}}, and those actions helped restore short pockets of stable running, but {{followUpA}} and {{followUpB}} remain open and should stay visible through the next handoff. {{repeatedIssue}} appears in multiple notes, suggesting a shared pattern rather than scattered noise. Several entries mention quick recovery after intervention, yet the notes still describe repeated checks on the same areas, especially where cleaning and temperature adjustments overlap. Watch {{riskLine}} during the next speed change, because the line sounds controlled but not convincingly closed from an operator-note perspective.",
+        "The four-hour window shows a clear rhythm: {{themeA}}, {{themeB}}, and {{themeC}} keep resurfacing across {{assetScope}}. Operators have already {{actionA}} and {{actionB}}, which reduced the immediate pressure, though {{followUpA}} and {{followUpB}} are still unresolved. {{repeatedIssue}} is the most repeated pattern in the feed, so it should be treated as a developing condition rather than background chatter. Most notes describe short corrective steps that work quickly, but the same topics return after restarts and changeovers. That makes {{riskLine}} the right watchlist item for the next pass, especially while a lower-confidence note and an asset gap are still part of the record.",
+        "Over the past four hours, the note stream centers on {{themeA}}, {{themeB}}, and {{themeC}} across {{assetScope}}. The crew already {{actionA}} and {{actionB}}, creating a steadier run, yet {{followUpA}} and {{followUpB}} still sit open in the queue. {{repeatedIssue}} keeps resurfacing, which gives the window a repeated-problem feel instead of a series of isolated fixes. Operator language suggests the line responds well to quick touches, but the same checks are being revisited after speed lifts and brief restarts. Keep {{riskLine}} under watch during the next production push and use the note trail to confirm whether the line is stabilizing or simply recovering in short bursts."
+      ],
+      "Today": [
+        "Today's operator notes show a consistent pattern around {{themeA}}, {{themeB}}, and {{themeC}} across {{assetScope}}. Operators already {{actionA}} and {{actionB}}, which helped recover flow several times, but {{followUpA}} and {{followUpB}} are still open and should carry into the next review. {{repeatedIssue}} stands out as the most repeated signal in the feed, and it appears alongside smaller repeats involving cleaning checks and film handling. Most notes describe short interventions that restore output quickly, yet the same topics keep returning after warm-up, changeover, or speed lift. Watch {{riskLine}} as the main risk line, because the written record suggests stable recovery is possible but not fully proven from the note trail alone.",
+        "Looking across the full day, the strongest note themes are {{themeA}}, {{themeB}}, and {{themeC}} across {{assetScope}}. The team has already {{actionA}} and {{actionB}}, and that helped the line recover more than once, though {{followUpA}} and {{followUpB}} still need clean closure. {{repeatedIssue}} is repeated often enough to anchor the watchlist, while related notes about cleaning and tracking show the operators are still compensating in real time. The overall mood of the log is controlled but cautious: recovery is quick, documentation is active, and the same hardware areas keep drawing attention. Keep {{riskLine}} in focus through the remainder of the day and use the latest stable note as the reference point.",
+        "The day's note trail is shaped by {{themeA}}, {{themeB}}, and {{themeC}} across {{assetScope}}. Operators have already {{actionA}} and {{actionB}}, so the line keeps coming back, but {{followUpA}} and {{followUpB}} remain unfinished and should not disappear in handover. {{repeatedIssue}} is the clearest repeated issue detected, which makes it more than a temporary irritation in the record. Several notes mention good recovery immediately after intervention, yet they also describe repeated checks on the same hardware and sensors. Watch {{riskLine}} as the main risk line going forward, because the shift has workable fixes in place but still lacks a completely clean run in the note history."
+      ]
+    };
+
+    const tagOptions = {
+      reason: ["temperature drift", "film tracking", "sensor fouling", "jam", "alignment drift"],
+      component: ["sealer jaw", "film dancer", "cartoner photoeye", "infeed guide", "fold rail"],
+      action: ["raised setpoint", "cleaned sensor", "tightened guide", "verified thermocouple", "collected sample", "requested station check", "adjusted rail"]
+    };
+
+    const summaryFallback = "No operator notes are currently inside the active window, so there is no live note pattern to summarize. Treat this as a quiet slice rather than a verified clean run: confirm the filters, confirm the time range, and keep watch for the next note arrival. If activity resumes, use the stream to check whether new notes cluster around a single asset, repeat a known tag theme, or point to a fresh follow-up that needs ownership before handover. Until then, the best risk line is simple discipline around tagging, asset labeling, and closing any outstanding follow-up before the next cluster of notes starts to build.";
+
+    // ── Live capture adapter ──────────────────────────────────────────────────
+    // Reads ShiftNote objects saved by the /capture app from localStorage and
+    // maps them to the dashboard note schema, then prepends them to mockNotes.
+    function getShiftLetter(isoTs) {
+      const h = new Date(isoTs).getHours();
+      if (h >= 6 && h < 14) return "A";
+      if (h >= 14 && h < 22) return "B";
+      return "C";
+    }
+    function mapCapturedNote(n) {
+      const score = n.completenessScore ?? 0;
+      return {
+        id: n.id,
+        ts: n.timestamp,
+        site: "Live Capture",
+        line: n.structured?.machine ? n.structured.machine : "Unknown",
+        operator: (n.deviceId || "??").replace("device_", "").slice(0, 4).toUpperCase(),
+        asset: n.structured?.machine || null,
+        transcriptShort: (n.transcript || "").slice(0, 140),
+        transcriptFull: n.transcript || "",
+        tags: {
+          reason:    n.structured?.reason    || null,
+          component: n.structured?.component || null,
+          action:    n.structured?.actionTaken || null,
+        },
+        enriched: false,
+        confidence: score >= 80 ? "high" : score >= 50 ? "med" : "low",
+        context: { snapshots: [], alarms: [] },
+        flags: {
+          needsFollowUp: !n.isComplete,
+          missingAsset:  !n.structured?.machine,
+          untagged:      !n.structured?.tags?.length,
+        },
+        shift: getShiftLetter(n.timestamp),
+        resolved: false,
+        _isCaptured: true,
+        // All tags from voice capture — used to seed the tag editor with captured values
+        _capturedTags: Array.isArray(n.structured?.tags) ? n.structured.tags : [],
+      };
+    }
+    function loadCapturedNotes() {
+      try {
+        const raw = localStorage.getItem("shiftvoice_notes");
+        return raw ? JSON.parse(raw).map(mapCapturedNote) : [];
+      } catch { return []; }
+    }
+    const capturedNotes = loadCapturedNotes();
+    const allMockNotes  = [...capturedNotes, ...mockNotes];
+    // ─────────────────────────────────────────────────────────────────────────
+
+    const noteState = JSON.parse(JSON.stringify(allMockNotes));
+    // Use real time when live notes exist so their timestamps resolve correctly.
+    // Fall back to the demo anchor so mock notes still appear in "Today" filter.
+    const anchorNow = capturedNotes.length ? new Date() : new Date("2026-04-03T15:24:12");
+    const state = {
+      theme: "light",
+      site: capturedNotes.length ? "All Sites" : "North Hall",
+      line: "All Lines",
+      operator: "All Operators",
+      shift: "All",
+      timeRange: "Today",
+      search: "",
+      attentionFilter: null,
+      selectedId: null,
+      drawerOpen: false,
+      replayNoteId: null,
+      summaryIndex: { "Last 60m": 0, "4h": 0, "Today": 0 },
+      summaryUpdatedAt: Date.now(),
+      summarySignature: "",
+      summaryExpanded: false,
+      copiedAt: 0,
+      resolved: {},
+      followUpOverrides: {}
+    };
+
+    const els = {
+      siteSelect: document.getElementById("siteSelect"),
+      lineSelect: document.getElementById("lineSelect"),
+      operatorSelect: document.getElementById("operatorSelect"),
+      shiftSelect: document.getElementById("shiftSelect"),
+      searchInput: document.getElementById("searchInput"),
+      statusPill: document.getElementById("statusPill"),
+      themeLabel: document.getElementById("themeLabel"),
+      heroGrid: document.getElementById("heroGrid"),
+      streamHead: document.getElementById("streamHead"),
+      contextStrip: document.getElementById("contextStrip"),
+      notesStream: document.getElementById("notesStream"),
+      needsAttentionCard: document.getElementById("needsAttentionCard"),
+      drawerShell: document.getElementById("drawerShell"),
+      drawerContent: document.getElementById("drawerContent")
+    };
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function escapeRegex(value) {
+      return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    function getTerms(query) {
+      return query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    }
+
+    function highlightText(text, query) {
+      const safe = escapeHtml(text ?? "");
+      const terms = getTerms(query);
+      if (!terms.length) return safe;
+      const pattern = new RegExp("(" + terms.map(escapeRegex).join("|") + ")", "ig");
+      return safe.replace(pattern, "<mark>$1</mark>");
+    }
+
+    function titleCase(value) {
+      return String(value || "").replace(/\b\w/g, (char) => char.toUpperCase());
+    }
+
+    function parseTs(ts) {
+      return new Date(ts);
+    }
+
+    function getWindowStart(range) {
+      if (range === "Last 60m") return new Date(anchorNow.getTime() - 60 * 60 * 1000);
+      if (range === "4h") return new Date(anchorNow.getTime() - 4 * 60 * 60 * 1000);
+      return new Date(anchorNow.getFullYear(), anchorNow.getMonth(), anchorNow.getDate(), 0, 0, 0, 0);
+    }
+
+    function isSameDay(dateA, dateB) {
+      return dateA.getFullYear() === dateB.getFullYear() && dateA.getMonth() === dateB.getMonth() && dateA.getDate() === dateB.getDate();
+    }
+
+    function formatTime(ts) {
+      return parseTs(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+    }
+
+    function relativeMinutesSince(timestamp) {
+      const diff = Math.max(0, Date.now() - timestamp);
+      const mins = Math.floor(diff / 60000);
+      return mins === 0 ? "just now" : mins + "m ago";
+    }
+
+    function deriveNote(note) {
+      const followUp = state.followUpOverrides.hasOwnProperty(note.id) ? state.followUpOverrides[note.id] : note.flags.needsFollowUp;
+      const tagCount = Object.values(note.tags).filter(Boolean).length;
+      return {
+        ...note,
+        resolved: !!state.resolved[note.id],
+        flags: {
+          needsFollowUp: followUp,
+          missingAsset: note.flags.missingAsset || !note.asset,
+          untagged: tagCount === 0 || note.flags.untagged
+        }
+      };
+    }
+
+    function allNotes() {
+      return noteState.map(deriveNote).sort((a, b) => parseTs(b.ts) - parseTs(a.ts));
+    }
+
+    function filterByControls(notes, options = {}) {
+      const settings = { includeTime: true, includeShift: true, ...options };
+      const windowStart = getWindowStart(state.timeRange);
+      return notes.filter((note) => {
+        if (state.site !== "All Sites" && note.site !== state.site) return false;
+        if (state.line !== "All Lines" && note.line !== state.line) return false;
+        if (state.operator !== "All Operators" && note.operator !== state.operator) return false;
+        if (settings.includeShift && state.shift !== "All" && note.shift !== state.shift) return false;
+        if (settings.includeTime) {
+          const ts = parseTs(note.ts);
+          if (ts < windowStart || ts > anchorNow) return false;
+        }
+        return true;
+      });
+    }
+
+    function visibleNotes() {
+      return filterByControls(allNotes());
+    }
+
+    function todayNotesForTiles() {
+      return allNotes().filter((note) => {
+        const ts = parseTs(note.ts);
+        if (!isSameDay(ts, anchorNow)) return false;
+        if (state.site !== "All Sites" && note.site !== state.site) return false;
+        if (state.line !== "All Lines" && note.line !== state.line) return false;
+        if (state.operator !== "All Operators" && note.operator !== state.operator) return false;
+        if (state.shift !== "All" && note.shift !== state.shift) return false;
+        return true;
+      });
+    }
+
+    function noteSearchBlob(note) {
+      return [
+        note.operator,
+        note.asset || "",
+        note.site,
+        note.line,
+        note.transcriptShort,
+        note.transcriptFull,
+        ...Object.values(note.tags).filter(Boolean)
+      ].join(" ").toLowerCase();
+    }
+
+    function matchesSearch(note) {
+      const terms = getTerms(state.search);
+      if (!terms.length) return true;
+      const blob = noteSearchBlob(note);
+      return terms.every((term) => blob.includes(term));
+    }
+
+    function getRepeatedIssue(notes) {
+      const counts = new Map();
+      notes.forEach((note) => {
+        [note.tags.reason, note.tags.component].filter(Boolean).forEach((item) => {
+          counts.set(item, (counts.get(item) || 0) + 1);
+        });
+      });
+      const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+      const top = sorted[0];
+      return top && top[1] > 1 ? { label: top[0], count: top[1] } : null;
+    }
+
+    function getAttentionItems(notes) {
+      const unresolved = notes.filter((note) => !note.resolved);
+      const repeated = getRepeatedIssue(unresolved);
+      const items = [
+        {
+          id: "untagged",
+          label: "Untagged note",
+          detail: "A note still needs tags before it carries cleanly into review.",
+          count: unresolved.filter((note) => note.flags.untagged).length,
+          matcher: (note) => note.flags.untagged
+        },
+        {
+          id: "low-confidence",
+          label: "Low confidence transcript",
+          detail: "Transcript confidence dipped and the note may need a human pass.",
+          count: unresolved.filter((note) => note.confidence === "low").length,
+          matcher: (note) => note.confidence === "low"
+        },
+        {
+          id: "missing-asset",
+          label: "Missing asset",
+          detail: "The note arrived without a reliable asset label.",
+          count: unresolved.filter((note) => note.flags.missingAsset).length,
+          matcher: (note) => note.flags.missingAsset
+        },
+        {
+          id: "follow-up",
+          label: "Needs follow-up",
+          detail: "Operators flagged a note that still needs an owner or confirmation.",
+          count: unresolved.filter((note) => note.flags.needsFollowUp).length,
+          matcher: (note) => note.flags.needsFollowUp
+        }
+      ];
+      if (repeated) {
+        items.push({
+          id: "repeated",
+          label: "Repeated issue detected",
+          detail: titleCase(repeated.label) + " surfaced " + repeated.count + " times in the active notes.",
+          count: repeated.count,
+          matcher: (note) => note.tags.reason === repeated.label || note.tags.component === repeated.label
+        });
+      }
+      return items.filter((item) => item.count > 0).slice(0, 5);
+    }
+
+    function matchesAttention(note, attentionItems) {
+      if (!state.attentionFilter) return true;
+      const active = attentionItems.find((item) => item.id === state.attentionFilter);
+      return active ? active.matcher(note) : true;
+    }
+
+    function statusChip(label, tone) {
+      return '<span class="chip ' + tone + '">' + escapeHtml(label) + "</span>";
+    }
+
+    function tagChips(note, query) {
+      const categories = [["Reason", note.tags.reason], ["Component", note.tags.component], ["Action", note.tags.action]].filter((entry) => entry[1]);
+      if (!categories.length) return '<span class="chip muted">No tags yet</span>';
+      return categories.map(([label, value]) => '<span class="chip"><strong>' + label + ":</strong> " + highlightText(value, query) + "</span>").join("");
+    }
+
+    function confidenceTone(confidence) {
+      return confidence === "high" ? "good" : confidence === "med" ? "warn" : "bad";
+    }
+
+    function timeRangeLabel() {
+      return state.timeRange + (state.shift !== "All" ? " | Shift " + state.shift : "");
+    }
+
+    function getAssetScope(notes) {
+      const pairs = [...new Set(notes.map((note) => note.site + " " + note.line))];
+      if (!pairs.length) return "the current selection";
+      if (pairs.length === 1) return pairs[0];
+      if (pairs.length === 2) return pairs.join(" and ");
+      return pairs.slice(0, 2).join(", ") + ", and adjacent lines";
+    }
+
+    function pickTop(values, fallback) {
+      const counts = new Map();
+      values.filter(Boolean).forEach((value) => counts.set(value, (counts.get(value) || 0) + 1));
+      const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([value]) => value);
+      return sorted.length ? sorted : fallback;
+    }
+
+    function summaryContext(notes) {
+      const reasons = pickTop(notes.map((note) => note.tags.reason), ["temperature drift", "sensor fouling", "film tracking"]);
+      const components = pickTop(notes.map((note) => note.tags.component), ["sealer jaw", "cartoner photoeye", "film dancer"]);
+      const actions = pickTop(notes.map((note) => note.tags.action), ["raised setpoint", "cleaned sensor"]);
+      const repeated = getRepeatedIssue(notes);
+      const followUps = notes.filter((note) => note.flags.needsFollowUp);
+      const lowConfidenceCount = notes.filter((note) => note.confidence === "low").length;
+      const missingAssetCount = notes.filter((note) => note.flags.missingAsset).length;
+      const riskBits = [];
+      if (repeated) riskBits.push(titleCase(repeated.label));
+      if (lowConfidenceCount) riskBits.push(lowConfidenceCount + " low-confidence note" + (lowConfidenceCount > 1 ? "s" : ""));
+      if (missingAssetCount) riskBits.push(missingAssetCount + " asset gap" + (missingAssetCount > 1 ? "s" : ""));
+      return {
+        themeA: reasons[0] || components[0] || "operator checks",
+        themeB: components[0] || reasons[1] || "sensor cleaning",
+        themeC: reasons[1] || components[1] || "follow-up tracking",
+        actionA: actions[0] || "made quick line adjustments",
+        actionB: actions[1] || "documented the restart checks",
+        followUpA: followUps[0] ? followUps[0].operator + " still needs confirmation on " + (followUps[0].asset ? followUps[0].asset.toLowerCase() : "the missing asset note") : "one follow-up still needs a clear owner",
+        followUpB: followUps[1] ? "the next crew still needs to revisit " + (followUps[1].tags.component || "the open note") : "the note trail still needs clean closure on the remaining open item",
+        repeatedIssue: repeated ? titleCase(repeated.label) + " repeated " + repeated.count + " times" : "one pattern repeated across several notes",
+        riskLine: riskBits.length ? riskBits.join(" and ").toLowerCase() : "tagging discipline and the next restart",
+        assetScope: getAssetScope(notes)
+      };
+    }
+
+    function fillTemplate(template, context) {
+      return template.replace(/\{\{(.*?)\}\}/g, (_, key) => context[key.trim()] || "");
+    }
+
+    function wordCount(text) {
+      return text.trim().split(/\s+/).filter(Boolean).length;
+    }
+
+    function trimWords(text, maxWords) {
+      const words = text.trim().split(/\s+/).filter(Boolean);
+      if (words.length <= maxWords) return text.trim();
+      return words.slice(0, maxWords).join(" ").replace(/[,:;]+$/, "") + ".";
+    }
+
+    function ensureSummaryLength(text) {
+      let summary = text.replace(/\s+/g, " ").trim();
+      if (wordCount(summary) < 60) {
+        summary += " Operators are still balancing quick fixes with follow-up checks, so the next tagged note should confirm whether the line is actually settling or only pausing between similar symptoms.";
+      }
+      if (wordCount(summary) > 76) summary = trimWords(summary, 72);
+      return summary;
+    }
+
+    function getSummary(notes) {
+      if (!notes.length) {
+        return "No operator notes in this window. Adjust filters or wait for the next captured note.";
+      }
+
+      // Group notes by machine
+      const byMachine = new Map();
+      for (const n of notes) {
+        const machine = n.asset || n.line || null;
+        const key = machine || "__none__";
+        if (!byMachine.has(key)) byMachine.set(key, []);
+        byMachine.get(key).push(n);
+      }
+
+      const machineNames = [...byMachine.keys()].filter(k => k !== "__none__");
+      const pendingNotes = notes.filter(n => n.flags.needsFollowUp);
+      const resolvedNotes = notes.filter(n => !n.flags.needsFollowUp);
+
+      // Opener line
+      let opener = "";
+      if (machineNames.length === 1) {
+        opener = machineNames[0] + " — " + notes.length + " note" + (notes.length > 1 ? "s" : "") + " logged.";
+      } else if (machineNames.length > 1) {
+        opener = machineNames.length + " machines flagged — " + notes.length + " note" + (notes.length > 1 ? "s" : "") + " total.";
+      } else {
+        opener = notes.length + " note" + (notes.length > 1 ? "s" : "") + " logged this shift.";
+      }
+
+      // One numbered line per machine — aggregate all issues, actions, status
+      const items = [];
+      let idx = 1;
+      for (const [key, machineNotes] of byMachine) {
+        const machine = key !== "__none__" ? key : null;
+        const pendingCount = machineNotes.filter(n => n.flags.needsFollowUp).length;
+        const resolvedCount = machineNotes.length - pendingCount;
+
+        // Collect unique reasons and actions across all notes for this machine
+        const reasons = [...new Set(machineNotes.map(n => n.tags.reason).filter(Boolean))];
+        const actions = [...new Set(machineNotes.map(n => n.tags.action).filter(Boolean))];
+
+        let line = idx + ") ";
+        if (machine) line += "[" + machine + "]";
+        else line += "[unspecified machine]";
+
+        // Issue count if more than one
+        if (machineNotes.length > 1) line += " " + machineNotes.length + " issues";
+
+        // Reasons
+        if (reasons.length) line += " — " + reasons.join(", ");
+
+        // Actions
+        if (actions.length) line += " → " + actions.join(", ");
+
+        // Status
+        if (pendingCount > 0 && resolvedCount > 0) {
+          line += " (" + resolvedCount + " resolved, " + pendingCount + " pending ⚠)";
+        } else if (pendingCount > 0) {
+          line += pendingCount > 1 ? " ⚠ all pending" : " ⚠ pending";
+        } else {
+          line += resolvedCount > 1 ? " ✓ all resolved" : " ✓ resolved";
+        }
+
+        items.push(line);
+        idx++;
+      }
+
+      // Closer
+      let closer = "";
+      if (pendingNotes.length === 0) {
+        closer = "All " + notes.length + " issue" + (notes.length > 1 ? "s" : "") + " resolved this shift.";
+      } else if (pendingNotes.length === notes.length) {
+        closer = "All " + pendingNotes.length + " issue" + (pendingNotes.length > 1 ? "s are" : " is") + " still open — hand over before leaving.";
+      } else {
+        closer = resolvedNotes.length + " resolved, " + pendingNotes.length + " still open for the next crew.";
+      }
+
+      return opener + "\n" + items.join("\n") + "\n" + closer;
+    }
+
+    function getSummarySignature() {
+      return JSON.stringify({ site: state.site, line: state.line, operator: state.operator, shift: state.shift, timeRange: state.timeRange });
+    }
+
+    function syncSummaryState(notes) {
+      const signature = getSummarySignature();
+      if (signature !== state.summarySignature) {
+        state.summarySignature = signature;
+        state.summaryUpdatedAt = Date.now();
+        state.summaryExpanded = false;
+      }
+      const summary = getSummary(notes);
+      state.currentSummary = summary;
+      return summary;
+    }
+
+    function getSummaryTagData(notes) {
+      if (!notes.length) {
+        return { themes: ["Waiting for notes"], actions: ["Await next tagged note"], open: ["Verify filters"], watch: ["Quiet window"] };
+      }
+      // Themes: unique "reason — machine" pairs
+      const themeSeen = new Set();
+      const themes = [];
+      for (const n of notes) {
+        const machine = n.asset || n.line || null;
+        const reason = n.tags.reason;
+        if (!reason) continue;
+        const key = (machine || "") + "::" + reason;
+        if (themeSeen.has(key)) continue;
+        themeSeen.add(key);
+        themes.push(machine ? reason + " — " + machine : reason);
+        if (themes.length >= 3) break;
+      }
+      // Actions: unique "action — machine" pairs
+      const actionSeen = new Set();
+      const actions = [];
+      for (const n of notes) {
+        const machine = n.asset || n.line || null;
+        const action = n.tags.action;
+        if (!action) continue;
+        const key = (machine || "") + "::" + action;
+        if (actionSeen.has(key)) continue;
+        actionSeen.add(key);
+        actions.push(machine ? action + " — " + machine : action);
+        if (actions.length >= 3) break;
+      }
+      // Open: pending notes with machine + reason
+      const open = [];
+      for (const n of notes) {
+        if (!n.flags.needsFollowUp) continue;
+        const machine = n.asset || n.line || null;
+        const reason = n.tags.reason;
+        if (machine && reason) open.push(machine + ": " + reason + " (pending)");
+        else if (machine) open.push(machine + ": follow-up needed");
+        else if (reason) open.push(reason + " (pending)");
+        if (open.length >= 3) break;
+      }
+      // Watch: machines with unresolved issues
+      const watchSeen = new Set();
+      const watch = [];
+      for (const n of notes) {
+        if (!n.flags.needsFollowUp) continue;
+        const machine = n.asset || n.line || null;
+        if (!machine || watchSeen.has(machine)) continue;
+        watchSeen.add(machine);
+        const reason = n.tags.reason;
+        watch.push(reason ? machine + " — " + reason + " unresolved" : machine + " — issue unresolved");
+        if (watch.length >= 2) break;
+      }
+      return {
+        themes: themes.length ? themes : ["No specific problems identified"],
+        actions: actions.length ? actions : ["No actions logged"],
+        open: open.length ? open : ["No open follow-ups"],
+        watch: watch.length ? watch : ["Nothing to flag"]
+      };
+    }
+
+    function renderHero(notes, todayNotes) {
+      const latest = notes[0];
+      const taggedCount = todayNotes.filter((note) => !note.flags.untagged).length;
+      const coverage = todayNotes.length ? Math.round((taggedCount / todayNotes.length) * 100) : 0;
+      if (!latest) {
+        els.heroGrid.innerHTML = '<section class="panel hero-card"><div class="eyebrow">Latest Operator Note</div><h1>No notes in this view</h1><p class="transcript-preview">Adjust the site, line, operator, time range, or shift filter to bring notes back into the active stream.</p><button type="button" class="secondary-button" disabled>Open note</button></section><section class="panel stat-tile"><div class="eyebrow">Notes Captured (Today)</div><div class="big-number">0</div><p class="stat-caption">No operator notes match the current filters for today.</p></section><section class="panel stat-tile"><div class="eyebrow">Tag Coverage</div><div class="big-number">0%</div><p class="stat-caption">Tag coverage updates from the active site, line, operator, and shift filters.</p></section>';
+        return;
+      }
+      els.heroGrid.innerHTML = `
+        <section class="panel hero-card">
+          <div class="eyebrow">Latest Operator Note</div>
+          <div class="latest-time">${formatTime(latest.ts)}</div>
+          <div class="hero-meta"><span>${escapeHtml(latest.operator)}</span><span>${latest.asset ? escapeHtml(latest.asset) : "Asset missing"}</span></div>
+          <p class="transcript-preview">${highlightText(latest.transcriptShort, state.search)}</p>
+          <div class="chip-row">
+            ${tagChips(latest, state.search)}
+            ${statusChip(latest.enriched ? "Enriched" : "Pending", latest.enriched ? "good" : "warn")}
+            ${statusChip("Confidence " + titleCase(latest.confidence), confidenceTone(latest.confidence))}
+          </div>
+          <button type="button" class="primary-button" data-action="open-note" data-id="${latest.id}">Open note</button>
+        </section>
+        <section class="panel stat-tile">
+          <div><div class="eyebrow">Notes Captured (Today)</div><div class="big-number">${todayNotes.length}</div></div>
+          <p class="stat-caption">Counts respect the active site, line, operator, and optional shift filter.</p>
+        </section>
+        <section class="panel stat-tile">
+          <div><div class="eyebrow">Tag Coverage</div><div class="big-number">${coverage}%</div></div>
+          <p class="stat-caption">${coverage}% of today's matching notes already carry at least one tag.</p>
+        </section>
+      `;
+    }
+
+    function renderHeroV2(notes, todayNotes) {
+      const summary = syncSummaryState(notes);
+      const taggedNotes = notes.filter((note) => !note.flags.untagged).length;
+      const coverage = notes.length ? Math.round((taggedNotes / notes.length) * 100) : 0;
+      const totalTags = notes.reduce((sum, note) => sum + Object.values(note.tags).filter(Boolean).length, 0);
+      const collapsed = window.innerWidth <= 620 && !state.summaryExpanded ? "is-collapsed" : "";
+      const copied = Date.now() - state.copiedAt < 1800;
+      const summaryTags = getSummaryTagData(notes);
+      els.heroGrid.innerHTML = `
+        <section class="panel hero-card summary-hero">
+          <div class="summary-hero-head">
+            <div class="summary-hero-copy">
+              <div class="eyebrow">Shift Auto-Summary</div>
+              <h1>Operator summary</h1>
+              <p>Short readout of what operators said, what they did, and what still needs eyes on it.</p>
+            </div>
+            <div class="summary-hero-tools">
+              <div class="summary-actions">
+                <button type="button" class="secondary-button" data-action="regenerate-summary">Regenerate</button>
+                <button type="button" class="secondary-button" data-action="copy-summary">${copied ? "Copied" : "Copy"}</button>
+              </div>
+              <div class="summary-updated">Updated: ${relativeMinutesSince(state.summaryUpdatedAt)}</div>
+            </div>
+          </div>
+          <p class="summary-body ${collapsed}" style="white-space:pre-line">${escapeHtml(summary)}</p>
+          <div class="summary-tag-board">
+            <div class="summary-tag-panel">
+              <div class="summary-tag-title">Key Themes + Actions</div>
+              <div class="summary-tag-list">
+                ${summaryTags.themes.map((item) => `<span class="summary-tag theme">${escapeHtml(item)}</span>`).join("")}
+                ${summaryTags.actions.map((item) => `<span class="summary-tag action">${escapeHtml(item)}</span>`).join("")}
+              </div>
+            </div>
+            <div class="summary-tag-panel is-watch">
+              <div class="summary-tag-title">Open Follow-Ups</div>
+              <div class="summary-tag-list">
+                ${summaryTags.open.map((item) => `<span class="summary-tag open">${escapeHtml(item)}</span>`).join("")}
+                ${summaryTags.watch.map((item) => `<span class="summary-tag watch">${escapeHtml(item)}</span>`).join("")}
+              </div>
+            </div>
+          </div>
+          <div class="meta-row">
+            <span class="chip">Notes included: ${notes.length}</span>
+            <span class="chip">${escapeHtml(timeRangeLabel())}</span>
+            <button type="button" class="ghost-button summary-expand" data-action="toggle-summary">${state.summaryExpanded ? "Collapse" : "Expand"}</button>
+          </div>
+        </section>
+        <section class="panel summary-metrics-card">
+          <div class="summary-metric">
+            <div><div class="eyebrow">Tags Logged</div><div class="big-number">${totalTags}</div></div>
+            <p class="stat-caption">Active summary tags</p>
+          </div>
+          <div class="summary-metric">
+            <div><div class="eyebrow">Tag Coverage</div><div class="big-number">${coverage}%</div></div>
+            <p class="stat-caption">${taggedNotes} of ${notes.length || 0} notes tagged</p>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderStreamHead(notes) {
+      const attentionLabel = state.attentionFilter ? "Highlighting attention signal" : state.search.trim() ? "Highlighting search matches" : "All matching notes shown";
+      els.streamHead.innerHTML = `
+        <div>
+          <div class="eyebrow">Notes Stream</div>
+          <h2>Operator notes stay front and center</h2>
+          <p>Timestamp, tags, transcript, enrichment status, and follow-up signals sit ahead of everything else.</p>
+        </div>
+        <div class="stream-meta">
+          <span class="chip">${notes.length} note${notes.length === 1 ? "" : "s"} in ${escapeHtml(timeRangeLabel())}</span>
+          <span class="chip">${escapeHtml(attentionLabel)}</span>
+        </div>
+      `;
+    }
+
+    function getContextSelection(notes) {
+      const latest = notes[0] || allNotes()[0];
+      const site = state.site !== "All Sites" ? state.site : latest ? latest.site : "North Hall";
+      const line = state.line !== "All Lines" ? state.line : latest ? latest.line : "Line 1";
+      return { site, line };
+    }
+
+    function percentAcrossWindow(ts, start, end) {
+      const total = end.getTime() - start.getTime();
+      if (total <= 0) return 0;
+      return ((parseTs(ts).getTime() - start.getTime()) / total) * 100;
+    }
+
+    function renderContextStrip(notes) {
+      const selection = getContextSelection(notes);
+      const windowStart = getWindowStart(state.timeRange);
+      const windowEnd = anchorNow;
+      const laneStates = contextStates.filter((item) => item.site === selection.site && item.line === selection.line);
+      const laneNotes = notes.filter((note) => note.site === selection.site && note.line === selection.line);
+      const alarms = laneNotes.flatMap((note) => note.context.alarms);
+      const replayNote = state.replayNoteId ? allNotes().find((note) => note.id === state.replayNoteId) : null;
+      const replayStart = replayNote ? new Date(parseTs(replayNote.ts).getTime() - 10 * 60 * 1000) : null;
+      const replayEnd = replayNote ? new Date(parseTs(replayNote.ts).getTime() + 10 * 60 * 1000) : null;
+      const duration = windowEnd.getTime() - windowStart.getTime();
+      const segmentsHtml = laneStates.map((segment) => {
+        const segStart = Math.max(parseTs(segment.start).getTime(), windowStart.getTime());
+        const segEnd = Math.min(parseTs(segment.end).getTime(), windowEnd.getTime());
+        if (segEnd <= segStart) return "";
+        const left = ((segStart - windowStart.getTime()) / duration) * 100;
+        const width = ((segEnd - segStart) / duration) * 100;
+        return `<div class="context-segment ${segment.state}" style="left:${left}%;width:${width}%"></div>`;
+      }).join("");
+      const replayHtml = replayNote ? `<div class="context-replay" style="left:${Math.max(0, ((Math.max(replayStart.getTime(), windowStart.getTime()) - windowStart.getTime()) / duration) * 100)}%;width:${Math.max(0, ((Math.min(replayEnd.getTime(), windowEnd.getTime()) - Math.max(replayStart.getTime(), windowStart.getTime())) / duration) * 100)}%"></div>` : "";
+      const alarmHtml = alarms.filter((alarm) => {
+        const time = parseTs(alarm.ts);
+        return time >= windowStart && time <= windowEnd;
+      }).slice(0, 16).map((alarm) => `<div class="alarm-tick" title="${escapeHtml(alarm.code)}" style="left:${percentAcrossWindow(alarm.ts, windowStart, windowEnd)}%"></div>`).join("");
+      const markerHtml = laneNotes.map((note) => {
+        const active = note.id === state.selectedId || note.id === state.replayNoteId ? "is-active" : "";
+        return `<button type="button" class="note-marker ${active}" title="${escapeHtml(formatTime(note.ts) + " | " + note.operator)}" style="left:${percentAcrossWindow(note.ts, windowStart, windowEnd)}%" data-action="open-note" data-id="${note.id}"></button>`;
+      }).join("");
+      els.contextStrip.innerHTML = `
+        <div class="context-head">
+          <div class="context-label">
+            <strong>Context Strip</strong>
+            <span>${escapeHtml(selection.site)} | ${escapeHtml(selection.line)} | muted machine state, alarms, and note markers</span>
+          </div>
+          <div class="chip-row">${replayNote ? '<span class="chip good">Replay window active</span>' : '<span class="chip muted">Click a marker to open the note</span>'}</div>
+        </div>
+        <div class="context-lane">${segmentsHtml}${replayHtml}${alarmHtml}${markerHtml}</div>
+        <div class="context-legend"><span class="run">Run</span><span class="slow">Slow</span><span class="stop">Stop / Fault</span></div>
+      `;
+    }
+
+    function renderNotes(notes, attentionItems) {
+      if (!notes.length) {
+        els.notesStream.innerHTML = '<div class="panel empty-card">No notes match the active filters. Shift the site, line, operator, time range, or shift filter to bring the stream back.</div>';
+        return;
+      }
+      els.notesStream.innerHTML = notes.map((note) => {
+        const dimmed = !matchesSearch(note) || !matchesAttention(note, attentionItems);
+        const classes = ["panel", "note-card", note.id === state.selectedId ? "is-selected" : "", dimmed ? "is-dimmed" : "", note.resolved ? "is-resolved" : ""].filter(Boolean).join(" ");
+        return `
+          <button type="button" class="${classes}" data-action="open-note" data-id="${note.id}">
+            <div class="note-head">
+              <div>
+                <div class="note-time">${formatTime(note.ts)}</div>
+                <div class="note-ident"><span>${highlightText(note.operator, state.search)}</span><span>${note.asset ? highlightText(note.asset, state.search) : '<mark>Asset missing</mark>'}</span></div>
+              </div>
+              ${note.resolved ? '<span class="chip muted">Resolved</span>' : ""}
+            </div>
+            <p class="note-snippet">${highlightText(note.transcriptShort, state.search)}</p>
+            <div class="note-foot">
+              ${tagChips(note, state.search)}
+              ${statusChip(note.enriched ? "Ready" : "Pending", note.enriched ? "good" : "warn")}
+              ${statusChip("Confidence " + titleCase(note.confidence), confidenceTone(note.confidence))}
+              ${note.flags.needsFollowUp ? '<span class="chip bad">Follow-up</span>' : ""}
+            </div>
+          </button>
+        `;
+      }).join("");
+    }
+
+    function renderNeedsAttention(notes, attentionItems) {
+      els.needsAttentionCard.innerHTML = `
+        <div class="side-head">
+          <div class="eyebrow">Needs Attention</div>
+          <h2>Note quality and follow-up only</h2>
+          <p>Click a signal to highlight related notes and dim the rest without collapsing the feed.</p>
+        </div>
+        <div class="attention-list">
+          ${attentionItems.length ? attentionItems.map((item) => `
+            <button type="button" class="attention-item ${state.attentionFilter === item.id ? "is-active" : ""}" data-action="toggle-attention" data-id="${item.id}">
+              <div class="attention-top"><span>${escapeHtml(item.label)}</span><span class="attention-count">${item.count}</span></div>
+              <p>${escapeHtml(item.detail)}</p>
+            </button>
+          `).join("") : '<div class="empty-card">No note-quality issues are active in the current window.</div>'}
+          ${state.attentionFilter ? '<button type="button" class="ghost-button" data-action="clear-attention">Clear highlight</button>' : ""}
+        </div>
+      `;
+    }
+
+    function formatSnapshot(snapshot) {
+      return `<div class="mini-item"><span>${escapeHtml(snapshot.name)}</span><strong>${escapeHtml(String(snapshot.value))} ${escapeHtml(snapshot.unit)}</strong></div>`;
+    }
+
+    function formatAlarm(alarm) {
+      return `<div class="mini-item"><span>${formatTime(alarm.ts)}</span><strong>${escapeHtml(alarm.code)}</strong></div>`;
+    }
+
+    function renderTagEditor(note) {
+      const isCaptured = !!note._isCaptured;
+      const capturedTagsRaw = note._capturedTags || [];
+
+      return Object.entries(tagOptions).map(([category, options]) => {
+        const current = note.tags[category];
+
+        // For captured notes: only show tags derived from this note (+ any custom added by operator)
+        // For mock/demo notes: show the full preset list
+        let pillOptions;
+        if (isCaptured) {
+          // Start with the structured field value for this category
+          const structured = note.tags[category];
+          // Combine with any capturedTags that loosely match this category (all tags shown under reason)
+          const derived = [...new Set([
+            ...(capturedTagsRaw),
+            ...(structured ? [structured] : [])
+          ].filter(Boolean))];
+          pillOptions = derived;
+        } else {
+          pillOptions = options;
+        }
+
+        // Always keep any manually-added custom values visible
+        if (current && !pillOptions.includes(current)) {
+          pillOptions = [...pillOptions, current];
+        }
+
+        return `
+        <div class="tag-row">
+          <span>${escapeHtml(category)}</span>
+          <div class="tag-pills">
+            ${pillOptions.map(o => `<button type="button" class="tag-toggle ${isCaptured ? "is-captured" : ""} ${current === o ? "is-active" : ""}" data-action="toggle-tag" data-category="${category}" data-value="${escapeHtml(o)}">${escapeHtml(o)}</button>`).join("")}
+            <button type="button" class="tag-toggle ${!current ? "is-active" : ""}" data-action="toggle-tag" data-category="${category}" data-value="">Clear</button>
+          </div>
+          <div class="tag-custom-row">
+            <input type="text" class="tag-custom-input" placeholder="Custom ${category}…" id="customTag_${note.id}_${category}">
+            <button type="button" class="tag-custom-add" data-action="add-custom-tag" data-category="${category}" data-note-id="${note.id}">+ Add</button>
+          </div>
+        </div>`;
+      }).join("");
+    }
+
+    function renderDrawer(notes) {
+      const note = allNotes().find((item) => item.id === state.selectedId);
+      if (!state.drawerOpen || !note) {
+        els.drawerShell.classList.remove("is-open");
+        els.drawerShell.setAttribute("aria-hidden", "true");
+        els.drawerContent.innerHTML = "";
+        return;
+      }
+      const thread = [...notes].sort((a, b) => parseTs(a.ts) - parseTs(b.ts)).slice(-10);
+      els.drawerShell.classList.add("is-open");
+      els.drawerShell.setAttribute("aria-hidden", "false");
+      els.drawerContent.innerHTML = `
+        <div class="drawer-head">
+          <div>
+            <div class="eyebrow">${formatTime(note.ts)} | ${escapeHtml(note.operator)} | ${note.asset ? escapeHtml(note.asset) : "Asset missing"}</div>
+            <h2>Operator Note Detail</h2>
+            <p>Transcript, tags, and a tight window of local context stay in the drawer so the main canvas remains calm.</p>
+          </div>
+          <button type="button" class="drawer-close" aria-label="Close" data-action="close-drawer">x</button>
+        </div>
+        <section class="drawer-block"><h3>Full transcript</h3><textarea id="drawerTranscript" data-note-id="${note.id}">${escapeHtml(note.transcriptFull)}</textarea></section>
+        <section class="drawer-block"><h3>Tags editor</h3><div class="tag-editor">${renderTagEditor(note)}</div></section>
+        <section class="drawer-block"><h3>Enrichment preview</h3><div class="mini-grid">${note.context.snapshots.slice(0, 3).map(formatSnapshot).join("")}</div><div class="mini-grid">${note.context.alarms.slice(0, 3).map(formatAlarm).join("")}</div></section>
+        <section class="drawer-block"><h3>Transcript Thread</h3><div class="thread-list">${thread.map((item) => `<div class="thread-item ${item.id === note.id ? "is-current" : ""}"><strong>${formatTime(item.ts)} | ${escapeHtml(item.operator)} | ${item.asset ? escapeHtml(item.asset) : "Asset missing"}</strong><p>${escapeHtml(item.transcriptShort)}</p></div>`).join("")}</div></section>
+        <div class="drawer-actions">
+          <button type="button" class="primary-button" data-action="replay-window" data-id="${note.id}">Replay window</button>
+          <button type="button" class="secondary-button" data-action="toggle-follow-up" data-id="${note.id}">${note.flags.needsFollowUp ? "Mark follow-up off" : "Mark needs follow-up"}</button>
+          <button type="button" class="secondary-button" data-action="resolve-note" data-id="${note.id}">${note.resolved ? "Resolved" : "Resolve"}</button>
+          <button type="button" class="secondary-button btn-danger" data-action="delete-note" data-id="${note.id}">Delete note</button>
+        </div>
+      `;
+    }
+
+    function renderDrawerV2(notes) {
+      const note = allNotes().find((item) => item.id === state.selectedId);
+      if (!state.drawerOpen || !note) {
+        els.drawerShell.classList.remove("is-open");
+        els.drawerShell.setAttribute("aria-hidden", "true");
+        els.drawerContent.innerHTML = "";
+        return;
+      }
+      const thread = [...notes].sort((a, b) => parseTs(a.ts) - parseTs(b.ts)).slice(-10);
+      els.drawerShell.classList.add("is-open");
+      els.drawerShell.setAttribute("aria-hidden", "false");
+      els.drawerContent.innerHTML = `
+        <div class="drawer-head">
+          <div>
+            <div class="eyebrow">${formatTime(note.ts)} | ${escapeHtml(note.operator)} | ${note.asset ? escapeHtml(note.asset) : "Asset missing"}</div>
+            <h2>Operator Note Detail</h2>
+            <p>Transcript, tags, and a tight window of local context stay in the drawer so the main canvas remains calm.</p>
+          </div>
+          <button type="button" class="drawer-close" aria-label="Close" data-action="close-drawer">x</button>
+        </div>
+        <section class="drawer-block"><h3>Full transcript</h3><textarea id="drawerTranscript" data-note-id="${note.id}">${escapeHtml(note.transcriptFull)}</textarea></section>
+        <section class="drawer-block"><h3>Tags editor</h3><div class="tag-editor">${renderTagEditor(note)}</div></section>
+        <section class="drawer-block"><h3>Enrichment preview</h3><div class="mini-grid">${note.context.snapshots.slice(0, 3).map(formatSnapshot).join("")}</div><div class="mini-grid">${note.context.alarms.slice(0, 3).map(formatAlarm).join("")}</div></section>
+        <section class="drawer-block"><h3>Transcript Thread</h3><div class="thread-list">${thread.map((item) => `<div class="thread-item ${item.id === note.id ? "is-current" : ""}"><strong>${formatTime(item.ts)} | ${escapeHtml(item.operator)} | ${item.asset ? escapeHtml(item.asset) : "Asset missing"}</strong><p>${escapeHtml(item.transcriptShort)}</p></div>`).join("")}</div></section>
+        <div class="drawer-actions">
+          <button type="button" class="primary-button" data-action="replay-window" data-id="${note.id}">Replay window</button>
+          <button type="button" class="secondary-button" data-action="toggle-follow-up" data-id="${note.id}">${note.flags.needsFollowUp ? "Mark follow-up off" : "Mark needs follow-up"}</button>
+          <button type="button" class="secondary-button" data-action="resolve-note" data-id="${note.id}">${note.resolved ? "Resolved" : "Resolve"}</button>
+          <button type="button" class="secondary-button btn-danger" data-action="delete-note" data-id="${note.id}">Delete note</button>
+        </div>
+      `;
+    }
+
+    function updateStatusV2() {
+      els.statusPill.innerHTML = '<span class="status-dot"></span><span>Voice capture: ' + (systemStatus.voiceConnected ? "Connected" : "Offline") + " | Last note: " + systemStatus.lastNoteSecondsAgo + 's ago</span>';
+    }
+
+    function updateStatus() {
+      els.statusPill.innerHTML = '<span class="status-dot"></span><span>Voice capture: ' + (systemStatus.voiceConnected ? "Connected" : "Offline") + " | Last note: " + systemStatus.lastNoteSecondsAgo + 's ago</span>';
+    }
+
+    function applyTheme() {
+      document.documentElement.setAttribute("data-theme", state.theme);
+      els.themeLabel.textContent = titleCase(state.theme);
+      try {
+        localStorage.setItem(themeKey, state.theme);
+      } catch (error) {}
+    }
+
+    function syncControls() {
+      els.siteSelect.value = state.site;
+      els.lineSelect.value = state.line;
+      els.operatorSelect.value = state.operator;
+      els.shiftSelect.value = state.shift;
+      document.querySelectorAll('[data-action="set-range"]').forEach((button) => {
+        button.classList.toggle("is-active", button.dataset.range === state.timeRange);
+      });
+    }
+
+    function render() {
+      syncControls();
+      applyTheme();
+      updateStatusV2();
+      const notes = visibleNotes();
+      const todayNotes = todayNotesForTiles();
+      const attentionItems = getAttentionItems(notes);
+      if (state.selectedId && !notes.some((note) => note.id === state.selectedId)) {
+        state.drawerOpen = false;
+      }
+      renderHeroV2(notes, todayNotes);
+      renderNotes(notes, attentionItems);
+      renderNeedsAttention(notes, attentionItems);
+      renderDrawerV2(notes);
+    }
+
+    function rotateSummary() {
+      const current = state.summaryIndex[state.timeRange] || 0;
+      state.summaryIndex[state.timeRange] = (current + 1) % shiftSummaries[state.timeRange].length;
+      state.summaryUpdatedAt = Date.now();
+      render();
+    }
+
+    function copySummary() {
+      const text = state.currentSummary || "";
+      if (!text) return;
+      const onCopied = () => {
+        state.copiedAt = Date.now();
+        render();
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(onCopied).catch(() => {
+          const area = document.createElement("textarea");
+          area.value = text;
+          document.body.appendChild(area);
+          area.select();
+          document.execCommand("copy");
+          document.body.removeChild(area);
+          onCopied();
+        });
+      }
+    }
+
+    function openNote(id) {
+      state.selectedId = id;
+      state.drawerOpen = true;
+      render();
+    }
+
+    function closeDrawer() {
+      state.drawerOpen = false;
+      render();
+    }
+
+    function findEditableNote(id) {
+      return noteState.find((note) => note.id === id);
+    }
+
+    function toggleTag(id, category, value) {
+      const note = findEditableNote(id);
+      if (!note) return;
+      note.tags[category] = note.tags[category] === value ? null : (value || null);
+      note.flags.untagged = Object.values(note.tags).filter(Boolean).length === 0;
+      state.summaryUpdatedAt = Date.now();
+      render();
+    }
+
+    function updateTranscript(id, value) {
+      const note = findEditableNote(id);
+      if (!note) return;
+      note.transcriptFull = value;
+      const short = value.trim().split(/(?<=[.!?])\s+/)[0] || value.trim();
+      note.transcriptShort = short.length > 140 ? short.slice(0, 137).trimEnd() + "..." : short;
+      render();
+    }
+
+    function toggleFollowUp(id) {
+      const note = allNotes().find((item) => item.id === id);
+      if (!note) return;
+      state.followUpOverrides[id] = !note.flags.needsFollowUp;
+      state.summaryUpdatedAt = Date.now();
+      render();
+    }
+
+    function resolveNote(id) {
+      state.resolved[id] = !state.resolved[id];
+      render();
+    }
+
+    function initTheme() {
+      try {
+        const stored = localStorage.getItem(themeKey);
+        if (stored === "light" || stored === "dark") state.theme = stored;
+      } catch (error) {}
+    }
+
+    document.addEventListener("click", (event) => {
+      const target = event.target.closest("[data-action]");
+      if (!target) return;
+      const action = target.dataset.action;
+      if (action === "set-range") {
+        state.timeRange = target.dataset.range;
+        state.summaryUpdatedAt = Date.now();
+        state.summaryExpanded = false;
+        render();
+      }
+      if (action === "toggle-theme") {
+        state.theme = state.theme === "light" ? "dark" : "light";
+        render();
+      }
+      if (action === "open-note") openNote(target.dataset.id);
+      if (action === "close-drawer") closeDrawer();
+      if (action === "toggle-attention") {
+        state.attentionFilter = state.attentionFilter === target.dataset.id ? null : target.dataset.id;
+        render();
+      }
+      if (action === "clear-attention") {
+        state.attentionFilter = null;
+        render();
+      }
+      if (action === "regenerate-summary") rotateSummary();
+      if (action === "copy-summary") copySummary();
+      if (action === "toggle-summary") {
+        state.summaryExpanded = !state.summaryExpanded;
+        render();
+      }
+      if (action === "replay-window") {
+        state.replayNoteId = target.dataset.id;
+        const contextStrip = document.getElementById("contextStrip");
+        if (contextStrip) {
+          contextStrip.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+        render();
+      }
+      if (action === "toggle-follow-up") toggleFollowUp(target.dataset.id);
+      if (action === "resolve-note") resolveNote(target.dataset.id);
+      if (action === "toggle-tag") toggleTag(state.selectedId, target.dataset.category, target.dataset.value);
+      if (action === "add-custom-tag") {
+        const noteId = target.dataset.noteId;
+        const category = target.dataset.category;
+        const input = document.getElementById(`customTag_${noteId}_${category}`);
+        const val = input ? input.value.trim().toLowerCase() : "";
+        if (val) {
+          const note = findEditableNote(noteId);
+          if (note) {
+            note.tags[category] = val;
+            note.flags.untagged = Object.values(note.tags).filter(Boolean).length === 0;
+            // Persist to _capturedTags so the pill stays visible on re-render
+            if (!note._capturedTags) note._capturedTags = [];
+            if (!note._capturedTags.includes(val)) note._capturedTags.push(val);
+            state.summaryUpdatedAt = Date.now();
+            render();
+          }
+        }
+      }
+      if (action === "delete-note") {
+        const id = target.dataset.id;
+        // Remove from noteState (in-memory)
+        const idx = noteState.findIndex(n => n.id === id);
+        if (idx !== -1) noteState.splice(idx, 1);
+        // Remove from localStorage
+        try {
+          const stored = JSON.parse(localStorage.getItem("shiftvoice_notes") || "[]");
+          localStorage.setItem("shiftvoice_notes", JSON.stringify(stored.filter(n => n.id !== id)));
+        } catch {}
+        state.drawerOpen = false;
+        state.selectedId = null;
+        render();
+        updateClearButton();
+      }
+      if (action === "clear-captured-notes") {
+        const label = document.getElementById("clearCapturedLabel");
+        if (label && label.textContent !== "Confirm reset") {
+          label.textContent = "Confirm reset";
+          setTimeout(() => { if (label) label.textContent = "Reset demo"; }, 3000);
+          return;
+        }
+        if (label) label.textContent = "Reset demo";
+        // Clear everything — captured notes deleted, feed goes empty
+        try { localStorage.removeItem("shiftvoice_notes"); } catch {}
+        noteState.length = 0;
+        _lastNoteCount = 0;   // prevent next poll from re-adding stale notes
+        state.drawerOpen = false;
+        state.selectedId = null;
+        state.site = "All Sites";
+        state.timeRange = "Today";
+        anchorNow.setTime(Date.now());
+        render();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && state.drawerOpen) closeDrawer();
+    });
+
+    els.siteSelect.addEventListener("change", (event) => {
+      state.site = event.target.value;
+      state.summaryUpdatedAt = Date.now();
+      render();
+    });
+
+    els.lineSelect.addEventListener("change", (event) => {
+      state.line = event.target.value;
+      state.summaryUpdatedAt = Date.now();
+      render();
+    });
+
+    els.operatorSelect.addEventListener("change", (event) => {
+      state.operator = event.target.value;
+      state.summaryUpdatedAt = Date.now();
+      render();
+    });
+
+    els.shiftSelect.addEventListener("change", (event) => {
+      state.shift = event.target.value;
+      state.summaryUpdatedAt = Date.now();
+      render();
+    });
+
+    els.searchInput.addEventListener("input", (event) => {
+      state.search = event.target.value;
+      render();
+    });
+
+    els.drawerContent.addEventListener("input", (event) => {
+      if (event.target.id === "drawerTranscript") {
+        const note = findEditableNote(event.target.dataset.noteId);
+        if (!note) return;
+        note.transcriptFull = event.target.value;
+        const short = event.target.value.trim().split(/(?<=[.!?])\s+/)[0] || event.target.value.trim();
+        note.transcriptShort = short.length > 140 ? short.slice(0, 137).trimEnd() + "..." : short;
+      }
+    });
+
+    els.drawerContent.addEventListener("change", (event) => {
+      if (event.target.id === "drawerTranscript") {
+        updateTranscript(event.target.dataset.noteId, event.target.value);
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      render();
+    });
+
+    initTheme();
+    render();
+
+    // ── Live polling: detect new captured notes every 4 seconds ──────────────
+    let _lastNoteCount = loadCapturedNotes().length;
+    setInterval(() => {
+      const fresh = loadCapturedNotes();
+      if (fresh.length !== _lastNoteCount) {
+        _lastNoteCount = fresh.length;
+        // Rebuild noteState: captured notes first, then mock notes
+        noteState.length = 0;
+        [...fresh, ...mockNotes].forEach(n => noteState.push(JSON.parse(JSON.stringify(n))));
+        // First live note: switch to real time anchor and show all sites
+        if (fresh.length === 1) {
+          anchorNow.setTime(Date.now());
+          state.site = "All Sites";
+          state.timeRange = "Today";
+        }
+        render();
+      }
+    }, 4000);
+    // ─────────────────────────────────────────────────────────────────────────
+  </script>
+</body>
+</html>
+

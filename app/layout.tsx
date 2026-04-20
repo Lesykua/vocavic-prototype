@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Barlow, Barlow_Condensed } from "next/font/google";
 import "./globals.css";
 
-const geist = Geist({
-  variable: "--font-geist-sans",
+const barlow = Barlow({
+  variable: "--font-barlow",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
+
+const barlowCondensed = Barlow_Condensed({
+  variable: "--font-barlow-condensed",
+  subsets: ["latin"],
+  weight: ["400", "600", "800"],
 });
 
 export const metadata: Metadata = {
@@ -19,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geist.variable} scroll-smooth`}>
+    <html lang="en" className={`${barlow.variable} ${barlowCondensed.variable} scroll-smooth`}>
       <body className="min-h-screen antialiased">{children}</body>
     </html>
   );

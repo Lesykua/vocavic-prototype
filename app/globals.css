@@ -1,12 +1,21 @@
 @import "tailwindcss";
 
+@theme {
+  --font-display: var(--font-barlow-condensed), "Franklin Gothic Medium", "Arial Narrow", sans-serif;
+  --font-ui: var(--font-barlow), "Segoe UI", system-ui, sans-serif;
+}
+
 html {
   scroll-behavior: smooth;
 }
 
 body {
-  background-color: #ffffff;
-  color: #0F1A2E;
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  background-color: #f2ebe0;
+  background-image:
+    linear-gradient(rgba(18, 35, 44, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(18, 35, 44, 0.07) 1px, transparent 1px);
+  background-size: 80px 80px;
+  color: #12232c;
+  font-family: var(--font-barlow), "Segoe UI", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }

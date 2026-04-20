@@ -193,27 +193,21 @@ export default function Home() {
           >
             From voice note to replayable event — in under 60 seconds
           </h2>
-          <a
-            href="https://www.youtube.com/watch?v=X71YMNsw5UM"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="relative block w-full aspect-video rounded-2xl overflow-hidden group border border-[rgba(18,35,44,0.12)] shadow-xl"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://img.youtube.com/vi/X71YMNsw5UM/maxresdefault.jpg"
-              alt="ShiftVoice demo video thumbnail"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-[#12232c]/40 group-hover:bg-[#12232c]/55 transition-colors" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-20 h-20 rounded-full bg-white/95 flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-200">
-                <svg className="w-8 h-8 ml-1" viewBox="0 0 24 24" fill="#0f5f68">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              </div>
-            </div>
-          </a>
+          {/* 16:9 responsive wrapper */}
+          <div className="relative w-full rounded-2xl overflow-hidden border border-[rgba(18,35,44,0.12)] shadow-xl" style={{ aspectRatio: '16/9' }}>
+            <video
+              className="absolute inset-0 w-full h-full object-cover"
+              controls
+              preload="metadata"
+              poster="https://img.youtube.com/vi/X71YMNsw5UM/maxresdefault.jpg"
+            >
+              <source
+                src="https://pub-7093cce43e7a4619997a2d5244f3148e.r2.dev/Shift%20Voice_v2.mp4"
+                type="video/mp4"
+              />
+              Your browser does not support HTML5 video.
+            </video>
+          </div>
           <p className="mt-4 text-sm text-[#687d85] text-center">Real capture · Real structure · Real replay</p>
         </div>
       </section>
@@ -259,7 +253,7 @@ export default function Home() {
               src="/dashboard.html"
               title="ShiftVoice — live operator notes demo"
               className="w-full border-0"
-              style={{ height: "780px" }}
+              style={{ height: "clamp(520px, 60vw, 720px)" }}
               loading="lazy"
             />
           </div>
@@ -452,44 +446,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── CAPABILITIES ─────────────────────────────────────────────────── */}
-      <section className="w-full py-20 border-t border-[rgba(18,35,44,0.1)]">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10">
-          <span className="inline-block bg-[rgba(15,95,104,0.1)] text-[#0f5f68] text-xs font-semibold uppercase tracking-widest px-3 py-1.5 rounded-full mb-5">
-            Core Capabilities
-          </span>
-          <h2
-            className="font-extrabold text-[#12232c] leading-none mb-14"
-            style={{ fontFamily: 'var(--font-barlow-condensed)', fontSize: 'clamp(2rem, 3.5vw, 3.5rem)' }}
-          >
-            Built for operational reality, not ideal conditions
-          </h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[
-              { icon: "🎙", title: "Voice Capture", body: "Short note, any time during the shift. Structured automatically. No discipline required, no new habit to build." },
-              { icon: "🏷", title: "Event Structure", body: "Every note becomes a tagged record: type, component, reason, action, owner." },
-              { icon: "⏮", title: "Replay", body: "Any event, scrubbed back in time. Operator observation synchronized with machine state." },
-              { icon: "📋", title: "Shift Summary", body: "Auto-generated handover report. Open actions, event log, status roll-up. Incoming shift arrives informed." },
-              { icon: "🔍", title: "Search & Pattern Detection", body: "Query past events by component, type, or frequency. Recurring issues surface before they become crises." },
-            ].map((cap) => (
-              <div
-                key={cap.title}
-                className="bg-[rgba(255,251,245,0.85)] rounded-2xl border border-[rgba(18,35,44,0.12)] p-7 hover:-translate-y-1 hover:shadow-md transition-all duration-200 shadow-sm"
-              >
-                <span className="text-2xl mb-4 block">{cap.icon}</span>
-                <h3
-                  className="font-bold text-[#12232c] text-xl mb-2"
-                  style={{ fontFamily: 'var(--font-barlow-condensed)', letterSpacing: '0.04em' }}
-                >
-                  {cap.title}
-                </h3>
-                <p className="text-[#687d85] text-sm leading-relaxed">{cap.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ─── OUTCOMES ─────────────────────────────────────────────────────── */}
       <section className="w-full py-20 border-t border-[rgba(18,35,44,0.1)]">
         <div className="max-w-7xl mx-auto px-6 lg:px-10">
@@ -531,110 +487,6 @@ export default function Home() {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── DEPLOYMENT ───────────────────────────────────────────────────── */}
-      <section className="w-full py-20 bg-[#12232c]">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10">
-          <span className="inline-block bg-[rgba(255,251,245,0.08)] text-[rgba(255,251,245,0.5)] text-xs font-semibold uppercase tracking-widest px-3 py-1.5 rounded-full mb-5">
-            Deployment
-          </span>
-          <h2
-            className="font-extrabold text-white leading-none mb-14"
-            style={{ fontFamily: 'var(--font-barlow-condensed)', fontSize: 'clamp(2rem, 3.5vw, 3.5rem)' }}
-          >
-            Works with what you have.<br />Adds what you&apos;re missing.
-          </h2>
-          <div className="grid md:grid-cols-2 gap-6 mb-10">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-8 hover:bg-white/[0.08] transition-colors">
-              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center mb-5 text-xl">⚙️</div>
-              <h3
-                className="font-bold text-white text-xl mb-3"
-                style={{ fontFamily: 'var(--font-barlow-condensed)', letterSpacing: '0.04em' }}
-              >
-                No process data system?
-              </h3>
-              <p className="text-[rgba(255,251,245,0.5)] text-sm leading-relaxed">
-                ShiftVoice works standalone. Voice capture → structured event → searchable memory. Full value, no data infrastructure required.
-              </p>
-            </div>
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-8 hover:bg-white/[0.08] transition-colors">
-              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center mb-5 text-xl">🔌</div>
-              <h3
-                className="font-bold text-white text-xl mb-3"
-                style={{ fontFamily: 'var(--font-barlow-condensed)', letterSpacing: '0.04em' }}
-              >
-                Have PI, Ignition, OPC UA, or similar?
-              </h3>
-              <p className="text-[rgba(255,251,245,0.5)] text-sm leading-relaxed">
-                ShiftVoice connects and wraps each event with surrounding machine signals at the moment of capture. Enrichment happens automatically.
-              </p>
-            </div>
-          </div>
-          <div className="border-t border-white/10 pt-10">
-            <p className="text-xs uppercase tracking-widest text-[rgba(255,251,245,0.35)] font-semibold mb-5">Deployment Options</p>
-            <div className="flex flex-wrap gap-3 mb-8">
-              {["Edge-only (default for regulated environments)", "Hybrid edge + cloud", "On-premises for full data sovereignty"].map((opt) => (
-                <span key={opt} className="text-sm text-[rgba(255,251,245,0.65)] border border-white/10 rounded-xl px-4 py-2 bg-white/5">
-                  {opt}
-                </span>
-              ))}
-            </div>
-            <p className="text-[rgba(255,251,245,0.45)] text-sm max-w-xl leading-relaxed">
-              ShiftVoice does not write to your existing systems. It reads, and it sits alongside.{" "}
-              <span className="font-semibold" style={{ color: '#7ec8cf' }}>Single-station integration: under one week.</span>
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── WHO IT'S FOR ─────────────────────────────────────────────────── */}
-      <section className="w-full py-20 border-t border-[rgba(18,35,44,0.1)]">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10">
-          <span className="inline-block bg-[rgba(15,95,104,0.1)] text-[#0f5f68] text-xs font-semibold uppercase tracking-widest px-3 py-1.5 rounded-full mb-5">
-            Who It&apos;s For
-          </span>
-          <h2
-            className="font-extrabold text-[#12232c] leading-none mb-14 max-w-2xl"
-            style={{ fontFamily: 'var(--font-barlow-condensed)', fontSize: 'clamp(2rem, 3.5vw, 3.5rem)' }}
-          >
-            Built for plants where knowledge is concentrated in people, not systems
-          </h2>
-          <div className="grid md:grid-cols-2 gap-12">
-            <div>
-              <p className="text-xs uppercase tracking-widest text-[#687d85] font-semibold mb-6">Qualifying Conditions</p>
-              <ul className="space-y-4">
-                {[
-                  "Handover quality depends on who happens to be working that shift",
-                  "Engineers re-investigate issues that were already diagnosed last month",
-                  "Managers make decisions in Tier meetings based on what people remember",
-                  "Key people leave and take operational knowledge with them",
-                  "You have production data — but no record of what humans actually observed",
-                ].map((item) => (
-                  <li key={item} className="flex gap-3 items-start">
-                    <span className="mt-0.5 w-5 h-5 rounded-full bg-[rgba(15,95,104,0.12)] text-[#0f5f68] text-xs flex items-center justify-center flex-shrink-0 font-bold">
-                      ✓
-                    </span>
-                    <span className="text-[#687d85] text-sm leading-relaxed">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-widest text-[#687d85] font-semibold mb-6">Decision-Makers</p>
-              <div className="grid grid-cols-2 gap-3">
-                {["Operations Manager", "Maintenance Lead", "Shift Leader", "Digital Transformation Lead"].map((role) => (
-                  <div
-                    key={role}
-                    className="bg-[rgba(255,251,245,0.85)] border border-[rgba(18,35,44,0.12)] rounded-xl px-5 py-4 shadow-sm"
-                  >
-                    <span className="text-[#12232c] text-sm font-semibold">{role}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -693,52 +545,6 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* ─── TRUST ────────────────────────────────────────────────────────── */}
-      <section className="w-full py-20 border-t border-[rgba(18,35,44,0.1)]">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10">
-          <span className="inline-block bg-[rgba(15,95,104,0.1)] text-[#0f5f68] text-xs font-semibold uppercase tracking-widest px-3 py-1.5 rounded-full mb-5">
-            Trust &amp; Governance
-          </span>
-          <h2
-            className="font-extrabold text-[#12232c] leading-none mb-14"
-            style={{ fontFamily: 'var(--font-barlow-condensed)', fontSize: 'clamp(2rem, 3.5vw, 3.5rem)' }}
-          >
-            Designed for operational learning.<br />Not surveillance.
-          </h2>
-          <div className="grid md:grid-cols-2 gap-6 mb-10">
-            <div className="bg-[rgba(255,251,245,0.85)] rounded-2xl border border-[rgba(47,143,99,0.3)] p-8 shadow-sm">
-              <p className="text-xs uppercase tracking-widest text-[#2f8f63] font-semibold mb-5">
-                ✓ What ShiftVoice stores by default
-              </p>
-              <ul className="space-y-3">
-                {["Structured transcript (text only)", "Event tags: type, component, reason, action", "Operator ID and shift assignment"].map((item) => (
-                  <li key={item} className="flex gap-3 items-start">
-                    <span className="mt-0.5 text-[#2f8f63] text-sm">✓</span>
-                    <span className="text-[#687d85] text-sm">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="bg-[rgba(255,251,245,0.85)] rounded-2xl border border-[rgba(214,88,72,0.3)] p-8 shadow-sm">
-              <p className="text-xs uppercase tracking-widest text-[#d65848] font-semibold mb-5">
-                ✕ What it does not store by default
-              </p>
-              <ul className="space-y-3">
-                {["Raw audio", "Continuous ambient recording", "Performance scoring"].map((item) => (
-                  <li key={item} className="flex gap-3 items-start">
-                    <span className="mt-0.5 text-[#d65848] text-sm">✕</span>
-                    <span className="text-[#687d85] text-sm">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-          <p className="text-[#687d85] text-sm max-w-2xl leading-relaxed">
-            Role-based permissions ensure operators see their own events. Managers see summary rollups. No individual performance monitoring.
-          </p>
         </div>
       </section>
 

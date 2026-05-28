@@ -6,6 +6,64 @@ import { NoteReview } from '@/components/capture/NoteReview'
 import { ShiftSummary } from '@/components/capture/ShiftSummary'
 import { ShiftNote } from '@/lib/types'
 
+const DEMO_SCRIPT =
+  'Around 2am, Moulding Machine 3 went down — the temperature sensor kept triggering the overheating alarm, reading about 40 degrees above setpoint. I isolated the machine and called maintenance to check the cooling fan. Turned out the fan had a blocked filter cutting airflow. We cleared the blockage and restarted the machine. Lesson: cooling fan filters on Moulding Machine 3 should be checked every week.'
+
+function DemoScriptCard() {
+  const [open, setOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(DEMO_SCRIPT).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  return (
+    <div
+      className="w-full rounded-2xl border overflow-hidden mb-6"
+      style={{ borderColor: 'rgba(15,95,104,0.25)', background: 'rgba(15,95,104,0.04)' }}
+    >
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between px-5 py-3.5 text-left"
+      >
+        <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#0f5f68' }}>
+          🎬 Demo script — say this aloud
+        </span>
+        <span className="text-lg" style={{ color: '#0f5f68' }}>{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="px-5 pb-5 flex flex-col gap-3">
+          <p
+            className="text-sm leading-relaxed rounded-xl p-4 italic"
+            style={{ background: '#fff', color: '#12232c', border: '1px solid rgba(18,35,44,0.1)' }}
+          >
+            &ldquo;{DEMO_SCRIPT}&rdquo;
+          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs" style={{ color: '#687d85' }}>
+              Hits all 5 fields — expect <strong style={{ color: '#2f8f63' }}>100 / 100</strong> completeness
+            </p>
+            <button
+              onClick={handleCopy}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+              style={{
+                background: copied ? '#2f8f63' : '#0f5f68',
+                color: '#fff',
+              }}
+            >
+              {copied ? '✓ Copied' : 'Copy text'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 type Step = 'capture' | 'review' | 'saved'
 
 function getDeviceId(): string {
@@ -111,9 +169,10 @@ export default function CapturePage() {
             <h1 className="text-2xl font-bold text-center mb-2" style={{ color: '#12232c' }}>
               Capture shift note
             </h1>
-            <p className="text-sm text-center mb-8" style={{ color: '#687d85' }}>
+            <p className="text-sm text-center mb-6" style={{ color: '#687d85' }}>
               Tap the mic and describe the event. Mention the machine, component, problem, and what you did.
             </p>
+            <DemoScriptCard />
             <VoiceCapture onTranscript={handleTranscript} />
           </>
         )}

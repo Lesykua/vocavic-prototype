@@ -120,7 +120,7 @@ export function ShiftSummary({ notes, label }: ShiftSummaryProps) {
           <div className="flex items-center gap-3">
             <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin"
               style={{ borderColor: '#0f5f68', borderTopColor: 'transparent' }} />
-            <span className="text-sm" style={{ color: '#687d85' }}>Building summary…</span>
+            <span className="text-sm" style={{ color: '#687d85' }}>Summarising with Gemma 3…</span>
           </div>
         )}
 

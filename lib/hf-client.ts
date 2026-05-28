@@ -1,17 +1,21 @@
 /**
  * Thin wrapper around the Hugging Face Inference Providers API (OpenAI-compatible).
- * Routes through Together AI using Qwen2.5-7B-Instruct-Turbo — confirmed working
- * on free-tier tokens with inference.serverless.write permission.
  *
  * URL format: https://router.huggingface.co/{provider}/v1/chat/completions
  * The model ID in the body must be the provider's alias, not the HF canonical ID.
+ *
+ * Confirmed working providers:
+ *   together      — Qwen/Qwen2.5-7B-Instruct-Turbo  (field extraction)
+ *   featherless-ai — google/gemma-3-12b-it           (shift summary)
  */
 
-const HF_PROVIDER = 'together'
-const HF_ROUTER_URL = `https://router.huggingface.co/${HF_PROVIDER}/v1/chat/completions`
-
-// Together AI alias for Qwen/Qwen2.5-7B-Instruct (non-gated, confirmed live)
+// Default provider + model for field extraction
+export const HF_DEFAULT_PROVIDER = 'together'
 export const HF_TEXT_MODEL = 'Qwen/Qwen2.5-7B-Instruct-Turbo'
+
+// Gemma 3 12B for shift summaries — more natural prose, low hallucination
+export const HF_SUMMARY_PROVIDER = 'featherless-ai'
+export const HF_SUMMARY_MODEL = 'google/gemma-3-12b-it'
 
 interface Message {
   role: 'system' | 'user' | 'assistant'
@@ -20,6 +24,7 @@ interface Message {
 
 interface HFChatOptions {
   model?: string
+  provider?: string   // overrides default provider
   messages: Message[]
   maxTokens?: number
   temperature?: number
@@ -35,8 +40,11 @@ export async function hfChat(options: HFChatOptions): Promise<string> {
   const token = process.env.HF_API_TOKEN
   if (!token) throw new Error('HF_API_TOKEN not configured')
 
+  const provider = options.provider ?? HF_DEFAULT_PROVIDER
+  const routerUrl = `https://router.huggingface.co/${provider}/v1/chat/completions`
   const model = options.model ?? HF_TEXT_MODEL
-  const res = await fetch(HF_ROUTER_URL, {
+
+  const res = await fetch(routerUrl, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,

@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local test/experiment JSON files
+fa_direct.json
+fa_gemma_tg.json
+fa_models.json
+fa_via_router.json
+gemma_model.json
+gemma_test1.json
+gemma_test2.json
+llm_test.json
+summary_result.json

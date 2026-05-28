@@ -1,44 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ShiftNote } from '@/lib/types'
+import { hfChat, HF_SUMMARY_MODEL, HF_SUMMARY_PROVIDER } from '@/lib/hf-client'
 
 export interface ShiftSummaryRequest {
   notes: ShiftNote[]
-  /** Optional label, e.g. "Day shift · Moulding Machine 3" */
   label?: string
 }
 
 export interface ShiftSummaryResponse {
-  /** 60–80 word narrative paragraph */
   narrative: string
-  /** Top recurring themes (max 3) */
   themes: string[]
-  /** Key actions taken (max 3) */
   actions: string[]
-  /** Open items / follow-ups (max 3) */
   open: string[]
-  /** What to watch next shift (max 2) */
   watch: string[]
   metrics: {
     noteCount: number
     completeCount: number
     incompleteCount: number
     avgScore: number
-    /** Most mentioned machine */
     topMachine: string | null
-    /** Most mentioned component */
     topComponent: string | null
   }
 }
 
-/**
- * Build the narrative entirely from structured data — no LLM, no hallucination.
- * One sentence per note, grouped by machine.
- * Format: "[Machine]: [reason] ([component]) — [actionTaken]. [Pending/Resolved]."
- */
-function buildNarrative(notes: ShiftNote[]): string {
-  if (notes.length === 0) return 'No notes recorded for this shift.'
+// ─── Prompt ──────────────────────────────────────────────────────────────────
 
-  // Group by machine so same-machine notes appear together
+const SYSTEM_PROMPT = `You write shift handover notes for manufacturing supervisors.
+
+You will receive a numbered list of machine events. Write a summary using ONLY the facts given.
+One line per machine event. Use plain, direct language. No filler words.
+
+Output format — follow this exactly:
+1. <Machine name>: <what happened>, <what was done>, <status>.
+2. <Machine name>: <what happened>, <what was done>, <status>.
+
+Rules:
+- Copy the machine name exactly from the input
+- status must be either "pending" or "resolved"
+- Do not add any information not present in the input
+- Do not use words: "overall", "notably", "the team", "operators", "diligently"
+- If no action is listed, omit it
+- Output only the numbered lines — no intro, no conclusion, no extra text`
+
+/**
+ * Build a compact, machine-grouped fact sheet for the model.
+ * No raw transcript — only extracted structured fields.
+ */
+function buildFactSheet(notes: ShiftNote[]): string {
   const byMachine = new Map<string, ShiftNote[]>()
   for (const n of notes) {
     const key = n.structured.machine ?? '__none__'
@@ -46,40 +54,79 @@ function buildNarrative(notes: ShiftNote[]): string {
     byMachine.get(key)!.push(n)
   }
 
-  const sentences: string[] = []
-  for (const [machine, machineNotes] of byMachine) {
+  const lines: string[] = []
+  let i = 1
+  for (const [key, machineNotes] of byMachine) {
+    const machine = key !== '__none__' ? key : 'unspecified machine'
     for (const n of machineNotes) {
       const s = n.structured
-      const parts: string[] = []
-
-      // Lead with machine name
-      if (machine !== '__none__') parts.push(`${machine}:`)
-
-      // Problem + component
-      if (s.reason && s.component) parts.push(`${s.reason} (${s.component})`)
-      else if (s.reason)           parts.push(s.reason)
-      else if (s.component)        parts.push(`issue on ${s.component}`)
-      else                         parts.push('issue logged')
-
-      // Action
-      if (s.actionTaken) parts.push(`— ${s.actionTaken}`)
-
-      // Status
-      parts.push(n.isComplete ? '(resolved).' : '(pending).')
-
-      sentences.push(parts.join(' '))
+      const fields: string[] = [`${i}. machine="${machine}"`]
+      if (s.reason)      fields.push(`problem="${s.reason}"`)
+      if (s.component)   fields.push(`component="${s.component}"`)
+      if (s.actionTaken) fields.push(`action="${s.actionTaken}"`)
+      fields.push(`status="${n.isComplete ? 'resolved' : 'pending'}"`)
+      lines.push(fields.join(' '))
+      i++
     }
   }
-
-  return sentences.join(' ')
+  return lines.join('\n')
 }
 
 /**
- * Derive themes, actions, open items, and watch list directly from structured
- * note data — no LLM needed, no risk of hallucination.
+ * Fallback narrative built from code — used if the LLM call fails or
+ * returns unusable output.
  */
+function buildFallbackNarrative(notes: ShiftNote[]): string {
+  if (notes.length === 0) return 'No notes recorded for this shift.'
+
+  const byMachine = new Map<string, ShiftNote[]>()
+  for (const n of notes) {
+    const key = n.structured.machine ?? '__none__'
+    if (!byMachine.has(key)) byMachine.set(key, [])
+    byMachine.get(key)!.push(n)
+  }
+
+  const machineNames = [...byMachine.keys()].filter(k => k !== '__none__')
+  const pending = notes.filter(n => !n.isComplete).length
+  const resolved = notes.length - pending
+
+  const header = machineNames.length > 1
+    ? `${machineNames.length} machines flagged — ${notes.length} note${notes.length > 1 ? 's' : ''} total.`
+    : machineNames.length === 1
+      ? `${machineNames[0]} — ${notes.length} note${notes.length > 1 ? 's' : ''} logged.`
+      : `${notes.length} note${notes.length > 1 ? 's' : ''} logged.`
+
+  let idx = 1
+  const items: string[] = []
+  for (const [key, machineNotes] of byMachine) {
+    const machine = key !== '__none__' ? key : null
+    for (const n of machineNotes) {
+      const s = n.structured
+      let line = `${idx}) `
+      if (machine) line += `[${machine}] `
+      if (s.reason && s.component) line += `${s.reason} on ${s.component}`
+      else if (s.reason) line += s.reason
+      else if (s.component) line += `issue on ${s.component}`
+      else line += 'issue logged'
+      if (s.actionTaken) line += ` → ${s.actionTaken}`
+      line += n.isComplete ? ' ✓ resolved' : ' ⚠ pending'
+      items.push(line)
+      idx++
+    }
+  }
+
+  const footer = pending === 0
+    ? `All ${notes.length} issue${notes.length > 1 ? 's' : ''} resolved.`
+    : pending === notes.length
+      ? `All ${pending} issue${pending > 1 ? 's are' : ' is'} still open — hand over before leaving.`
+      : `${resolved} resolved, ${pending} still open for the next crew.`
+
+  return [header, ...items, footer].join('\n')
+}
+
+// ─── Structured chips (code-derived, no LLM) ─────────────────────────────────
+
 function deriveStructuredFields(notes: ShiftNote[]): Pick<ShiftSummaryResponse, 'themes' | 'actions' | 'open' | 'watch'> {
-  // themes: "reason — machine" for each unique (machine, reason) pair
   const themeSeen = new Set<string>()
   const themes: string[] = []
   for (const n of notes) {
@@ -93,7 +140,6 @@ function deriveStructuredFields(notes: ShiftNote[]): Pick<ShiftSummaryResponse, 
     if (themes.length >= 3) break
   }
 
-  // actions: "action — machine" for each unique (machine, actionTaken) pair
   const actionSeen = new Set<string>()
   const actions: string[] = []
   for (const n of notes) {
@@ -107,7 +153,6 @@ function deriveStructuredFields(notes: ShiftNote[]): Pick<ShiftSummaryResponse, 
     if (actions.length >= 3) break
   }
 
-  // open: pending notes listed as "machine: reason"
   const open: string[] = []
   for (const n of notes) {
     if (n.isComplete) continue
@@ -115,18 +160,17 @@ function deriveStructuredFields(notes: ShiftNote[]): Pick<ShiftSummaryResponse, 
     const reason = n.structured.reason
     if (machine && reason) open.push(`${machine}: ${reason} (pending)`)
     else if (machine)      open.push(`${machine}: follow-up needed`)
-    else if (reason)       open.push(`${reason} (pending, machine unspecified)`)
+    else if (reason)       open.push(`${reason} (pending)`)
     if (open.length >= 3) break
   }
 
-  // watch: machines with unresolved issues
-  const watchMachines = new Set<string>()
+  const watchSeen = new Set<string>()
   const watch: string[] = []
   for (const n of notes) {
     if (n.isComplete) continue
     const machine = n.structured.machine
-    if (!machine || watchMachines.has(machine)) continue
-    watchMachines.add(machine)
+    if (!machine || watchSeen.has(machine)) continue
+    watchSeen.add(machine)
     const reason = n.structured.reason
     watch.push(reason ? `${machine} — ${reason} unresolved` : `${machine} — issue unresolved`)
     if (watch.length >= 2) break
@@ -140,31 +184,34 @@ function deriveStructuredFields(notes: ShiftNote[]): Pick<ShiftSummaryResponse, 
   }
 }
 
+// ─── Metrics ─────────────────────────────────────────────────────────────────
+
 function computeMetrics(notes: ShiftNote[]): ShiftSummaryResponse['metrics'] {
   const completeCount = notes.filter(n => n.isComplete).length
   const avgScore = notes.length
     ? Math.round(notes.reduce((s, n) => s + n.completenessScore, 0) / notes.length)
     : 0
 
-  // Most frequently mentioned machine
   const machineCounts = new Map<string, number>()
   const componentCounts = new Map<string, number>()
   for (const n of notes) {
-    if (n.structured.machine) machineCounts.set(n.structured.machine, (machineCounts.get(n.structured.machine) ?? 0) + 1)
-    if (n.structured.component) componentCounts.set(n.structured.component, (componentCounts.get(n.structured.component) ?? 0) + 1)
+    if (n.structured.machine)
+      machineCounts.set(n.structured.machine, (machineCounts.get(n.structured.machine) ?? 0) + 1)
+    if (n.structured.component)
+      componentCounts.set(n.structured.component, (componentCounts.get(n.structured.component) ?? 0) + 1)
   }
-  const topMachine = [...machineCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
-  const topComponent = [...componentCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
 
   return {
     noteCount: notes.length,
     completeCount,
     incompleteCount: notes.length - completeCount,
     avgScore,
-    topMachine,
-    topComponent,
+    topMachine:    [...machineCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null,
+    topComponent:  [...componentCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null,
   }
 }
+
+// ─── Handler ─────────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
   let body: ShiftSummaryRequest
@@ -177,22 +224,43 @@ export async function POST(req: NextRequest) {
   const notes: ShiftNote[] = Array.isArray(body.notes) ? body.notes : []
   const metrics = computeMetrics(notes)
 
-  // If no notes, return a static empty summary (no LLM call needed)
   if (notes.length === 0) {
-    const empty: ShiftSummaryResponse = {
-      narrative: 'No operator notes have been recorded for this shift window. Verify that notes are being captured and tagged correctly before the shift ends.',
+    return NextResponse.json({
+      narrative: 'No operator notes recorded for this shift window.',
       themes: ['No data yet'],
       actions: ['No actions logged'],
       open: ['Await first tagged note'],
       watch: ['Note capture rate'],
       metrics,
-    }
-    return NextResponse.json(empty)
+    } satisfies ShiftSummaryResponse)
   }
 
-  const narrative = buildNarrative(notes)
   const structured = deriveStructuredFields(notes)
 
-  const response: ShiftSummaryResponse = { narrative, ...structured, metrics }
-  return NextResponse.json(response)
+  // Ask Gemma 3 12B to write polished prose from structured facts only
+  let narrative: string
+  try {
+    const factSheet = buildFactSheet(notes)
+    const raw = await hfChat({
+      provider: HF_SUMMARY_PROVIDER,
+      model: HF_SUMMARY_MODEL,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: `Facts:\n${factSheet}` },
+      ],
+      maxTokens: 300,
+      temperature: 0,
+    })
+
+    // Accept if output contains at least one numbered line (1. or 1) format)
+    narrative = raw.trim()
+    if (!narrative || !/^\d+[.)]\s/.test(narrative.split('\n').find(l => l.trim()) ?? '')) {
+      narrative = buildFallbackNarrative(notes)
+    }
+  } catch {
+    // Any API failure → fall back to code-generated narrative instantly
+    narrative = buildFallbackNarrative(notes)
+  }
+
+  return NextResponse.json({ narrative, ...structured, metrics } satisfies ShiftSummaryResponse)
 }

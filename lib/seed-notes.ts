@@ -16,80 +16,81 @@ function hoursAgo(h: number): string {
 
 export function buildSeedNotes(deviceId: string): ShiftNote[] {
   return [
-    // ── 1. Moulding Machine 1 — hydraulic seal ─────────────────────────────
+    // ── 1. Injection Press 2 — motor burned out, 90 min downtime ───────────
     {
       id: 'seed-001',
-      timestamp: hoursAgo(7.1),
-      createdAt: hoursAgo(7.1),
+      timestamp: hoursAgo(7.2),
+      createdAt: hoursAgo(7.2),
       deviceId,
       transcript:
-        'Moulding Machine 1 went down at the start of shift. Hydraulic pressure dropped — found a leaking hydraulic seal on the clamping unit. Replaced the seal and restarted the machine. Everything looks normal now. We should check the seals on the other moulding machines as well.',
+        'Injection Press 2 went down hard at shift start. Motor burned out — smell of burning from the control panel, automatic shutdown triggered. Called emergency maintenance. Machine was down for 90 minutes. Maintenance replaced the motor. We lost the first production run completely. This is the second motor failure on this press in three months.',
       structured: {
-        tags: ['hydraulics', 'seal', 'moulding'],
-        reason: 'hydraulic pressure drop',
-        machine: 'Moulding Machine 1',
-        component: 'hydraulic seal',
-        actionTaken: 'replaced seal, restarted machine',
-        lesson: 'check hydraulic seals on all moulding machines at shift start',
+        tags: ['electrical', 'motor', 'downtime', 'alarm'],
+        reason: 'power fault',
+        machine: 'Injection Press 2',
+        component: 'motor',
+        actionTaken: 'called maintenance, replaced motor, restarted machine',
+        lesson: 'Injection Press 2 motor is failing repeatedly — escalate for full electrical inspection before next shift',
       },
       completenessScore: 100,
       isComplete: true,
     },
 
-    // ── 2. Conveyor Line A — drive belt ────────────────────────────────────
+    // ── 2. Safety near-miss — hydraulic fluid leak near walkway ────────────
     {
       id: 'seed-002',
-      timestamp: hoursAgo(6.0),
-      createdAt: hoursAgo(6.0),
+      timestamp: hoursAgo(6.1),
+      createdAt: hoursAgo(6.1),
       deviceId,
       transcript:
-        'Conveyor Line A stopped about halfway through the first hour. Mechanical jam — the drive belt had slipped off the pulley. Cleared the blockage and replaced the belt. Line is running again.',
+        'Near-miss on the moulding floor. Hydraulic fluid leak from Moulding Machine 4 pooling on the main walkway near the emergency exit. Operator almost slipped. Isolated the machine immediately, put down absorbent mats, filed a safety report. Maintenance patched the line but the root cause is a worn hydraulic seal. Machine back in service but needs proper seal replacement on next planned stop.',
       structured: {
-        tags: ['mechanical', 'belt', 'conveyor', 'downtime'],
-        reason: 'mechanical jam',
-        machine: 'Conveyor Line A',
-        component: 'drive belt',
-        actionTaken: 'cleared blockage, replaced belt',
+        tags: ['hydraulics', 'oil-leak', 'seal', 'moulding'],
+        reason: 'oil leak',
+        machine: 'Moulding Machine 4',
+        component: 'hydraulic seal',
+        actionTaken: 'isolated machine, filed safety report, patched hydraulic line',
+        lesson: 'replace hydraulic seal on MM4 at next planned stop — do not wait',
       },
-      completenessScore: 90,
+      completenessScore: 100,
       isComplete: true,
     },
 
-    // ── 3. Moulding Machine 2 — gearbox noise ──────────────────────────────
+    // ── 3. Packaging Line 2 — full batch rejected, wrong label run ──────────
     {
       id: 'seed-003',
       timestamp: hoursAgo(5.0),
       createdAt: hoursAgo(5.0),
       deviceId,
       transcript:
-        'Moulding Machine 2 making an unusual noise from the gearbox area. Not bad enough to stop production but I logged it. Lubricated the bearing and raised a work order for maintenance to inspect it properly during the next planned stop.',
+        'Major quality event on Packaging Line 2. Entire two-hour run — approximately 4,000 units — labeled with wrong product code. QC caught it during routine check. Full batch quarantined and flagged for rework. Root cause: label reel from previous shift was left loaded and not checked at changeover. Supervisor notified. Production plan for the rest of shift needs to be revised.',
       structured: {
-        tags: ['mechanical', 'bearing', 'moulding', 'lubrication'],
-        reason: 'unusual noise',
-        machine: 'Moulding Machine 2',
-        component: 'gearbox',
-        actionTaken: 'lubricated bearing, raised work order',
-        lesson: 'schedule full gearbox inspection at next planned stop',
+        tags: ['quality', 'packaging', 'downtime'],
+        reason: 'quality defect',
+        machine: 'Packaging Line 2',
+        component: 'control panel',
+        actionTaken: 'isolated machine, quarantined batch, escalated to supervisor',
+        lesson: 'mandatory label verification check required at every changeover — add to shift start checklist',
       },
       completenessScore: 100,
       isComplete: true,
     },
 
-    // ── 4. Extruder 1 — hopper blockage ────────────────────────────────────
+    // ── 4. Extruder 2 — screw wear causing dimensional drift ────────────────
     {
       id: 'seed-004',
-      timestamp: hoursAgo(3.8),
-      createdAt: hoursAgo(3.8),
+      timestamp: hoursAgo(3.5),
+      createdAt: hoursAgo(3.5),
       deviceId,
       transcript:
-        'Material blockage in Extruder 1 hopper. Production stopped for about 15 minutes. Cleared the blockage manually and restarted. Material flow looks normal now. Might be related to the batch we got this morning — material seems drier than usual.',
+        'Extruder 2 producing product with gradual dimensional drift — wall thickness creeping up by 0.4mm over two hours. QC flagged it. Suspect screw wear — this machine is overdue for a screw inspection by about 600 hours. Adjusted process parameters to compensate for now but this is a temporary fix. Raised work order for screw inspection. Batches since 10am have been held pending QC review.',
       structured: {
-        tags: ['extrusion', 'downtime', 'mechanical'],
-        reason: 'material blockage',
-        machine: 'Extruder 1',
-        component: 'hopper',
-        actionTaken: 'cleared blockage, restarted machine',
-        lesson: 'check incoming material moisture content before loading hopper',
+        tags: ['quality', 'extrusion', 'maintenance', 'downtime'],
+        reason: 'dimensional out-of-spec',
+        machine: 'Extruder 2',
+        component: 'screw',
+        actionTaken: 'adjusted pressure setpoint, raised work order, held batch for QC review',
+        lesson: 'screw wear inspection overdue by 600h — schedule immediately, do not let it reach failure',
       },
       completenessScore: 100,
       isComplete: true,
@@ -103,73 +104,74 @@ export function buildSeedNotes(deviceId: string): ShiftNote[] {
       createdAt: hoursAgo(2.5),
       deviceId,
       transcript:
-        'Temperature on Moulding Machine 3 running about 15 degrees above setpoint. Not alarming yet but keeping an eye on it. Adjusted the temperature setpoint slightly. The cooling fan might need a look — airflow feels reduced when I stand next to it.',
+        'Temperature on Moulding Machine 3 running about 15 degrees above setpoint. Not alarming yet but I am keeping an eye on it. Adjusted the temperature setpoint slightly. The cooling fan might need a look — airflow feels reduced when I stand next to it. Third time this week the temperature has crept up on this machine.',
       structured: {
         tags: ['overheating', 'cooling', 'moulding', 'sensor'],
         reason: 'overheating',
         machine: 'Moulding Machine 3',
         component: 'temperature sensor',
         actionTaken: 'adjusted temperature setpoint',
-      },
-      completenessScore: 80,
-      isComplete: true,
-    },
-
-    // ── 6. Packaging Line 1 — quality defect ───────────────────────────────
-    {
-      id: 'seed-006',
-      timestamp: hoursAgo(2.0),
-      createdAt: hoursAgo(2.0),
-      deviceId,
-      transcript:
-        'Packaging Line 1 producing parts slightly out of spec. Dimensional issue — parts coming out about 0.3mm too wide. Isolated the line and called maintenance. I think it is a mould alignment issue.',
-      structured: {
-        tags: ['quality', 'moulding', 'packaging', 'downtime'],
-        reason: 'dimensional out-of-spec',
-        machine: 'Packaging Line 1',
-        component: 'mould',
-        actionTaken: 'isolated machine, called maintenance',
-        lesson: 'verify mould alignment after every tool change',
+        lesson: 'recurring overheating on MM3 — cooling system needs proper inspection, not just setpoint adjustment',
       },
       completenessScore: 100,
       isComplete: true,
     },
 
-    // ── 7. Robot Arm 1 — PLC sensor fault ──────────────────────────────────
+    // ── 6. Robot Arm 1 — fourth collision fault this week ───────────────────
     {
-      id: 'seed-007',
-      timestamp: hoursAgo(1.2),
-      createdAt: hoursAgo(1.2),
+      id: 'seed-006',
+      timestamp: hoursAgo(1.8),
+      createdAt: hoursAgo(1.8),
       deviceId,
       transcript:
-        'Robot Arm 1 threw a sensor fault on the PLC. Line stopped automatically. Reset the alarm and ran a full cycle test — arm is operating normally. Escalated to supervisor anyway since this is the third time this week.',
+        'Robot Arm 1 collision fault again. Fourth time this week. Line stopped for 20 minutes each time. Reset the alarm and did a manual path check — arm is running but the root cause has not been found. Maintenance says the sensor is fine. I think it is a calibration drift issue or something in the PLC program. Escalated to engineering. This is costing us roughly 80 minutes of production per week.',
       structured: {
-        tags: ['sensor', 'alarm', 'electrical', 'maintenance'],
+        tags: ['sensor', 'alarm', 'electrical', 'downtime'],
         reason: 'sensor fault',
         machine: 'Robot Arm 1',
         component: 'PLC',
-        actionTaken: 'reset alarm, escalated to supervisor',
-        lesson: 'recurring PLC fault — needs permanent fix, not just reset',
+        actionTaken: 'reset alarm, escalated to engineering',
+        lesson: 'fourth fault this week — reset is not a fix. Engineering must investigate PLC calibration before next shift',
       },
       completenessScore: 100,
       isComplete: true,
     },
 
-    // ── 8. Cooling Tower — pump fault ──────────────────────────────────────
+    // ── 7. Compressor Room — pressure drop affecting entire cooling loop ─────
     {
-      id: 'seed-008',
-      timestamp: hoursAgo(0.5),
-      createdAt: hoursAgo(0.5),
+      id: 'seed-007',
+      timestamp: hoursAgo(1.0),
+      createdAt: hoursAgo(1.0),
       deviceId,
       transcript:
-        'Cooling tower pump showing a fault. Pressure dropping in the cooling loop across the whole line. Called maintenance — they isolated the pump and switched to the backup. Cooling restored. Original pump needs a service.',
+        'Compressor room pressure dropped sharply — cooling pressure fell below minimum threshold across the whole moulding floor. All four moulding machines automatically reduced cycle speed. Lost about 25% throughput for 40 minutes while maintenance diagnosed it. Turned out a solenoid valve had stuck closed. Maintenance forced it open manually and pressure restored. Valve needs replacing — it has been sticking intermittently for two weeks.',
       structured: {
-        tags: ['cooling', 'downtime', 'maintenance'],
-        reason: 'cooling failure',
-        machine: 'Cooling Tower',
-        component: 'pump',
-        actionTaken: 'called maintenance, isolated machine',
-        lesson: 'test backup pump monthly to confirm it is ready',
+        tags: ['cooling', 'hydraulics', 'moulding', 'downtime', 'alarm'],
+        reason: 'hydraulic pressure drop',
+        machine: 'Compressor Room',
+        component: 'solenoid valve',
+        actionTaken: 'called maintenance, manually opened valve, restored pressure',
+        lesson: 'sticking solenoid valve flagged two weeks ago — it caused a floor-wide slowdown today. Replace immediately',
+      },
+      completenessScore: 100,
+      isComplete: true,
+    },
+
+    // ── 8. Conveyor Line B — bearing failure, line down ─────────────────────
+    {
+      id: 'seed-008',
+      timestamp: hoursAgo(0.4),
+      createdAt: hoursAgo(0.4),
+      deviceId,
+      transcript:
+        'Conveyor Line B bearing failure. Loud grinding noise then a full stop. Maintenance confirmed the main drive bearing has seized. Replacement part not in stock — maintenance had to pull one from the spares on Conveyor Line A which takes Line A offline too. Both conveyors down. Expected back up in 45 minutes. Production supervisor is aware. Parts department notified to reorder bearing stock.',
+      structured: {
+        tags: ['mechanical', 'bearing', 'conveyor', 'downtime'],
+        reason: 'mechanical jam',
+        machine: 'Conveyor Line B',
+        component: 'bearing',
+        actionTaken: 'called maintenance, sourced spare from Line A, restarted machine',
+        lesson: 'bearing stock critically low — single failure took down two lines. Reorder minimum 4 units immediately',
       },
       completenessScore: 100,
       isComplete: true,

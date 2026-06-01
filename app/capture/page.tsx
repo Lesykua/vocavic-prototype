@@ -5,6 +5,7 @@ import { VoiceCapture } from '@/components/capture/VoiceCapture'
 import { NoteReview } from '@/components/capture/NoteReview'
 import { ShiftSummary } from '@/components/capture/ShiftSummary'
 import { ShiftNote } from '@/lib/types'
+import { buildSeedNotes } from '@/lib/seed-notes'
 
 const DEMO_SCRIPT =
   'Around 2am, Moulding Machine 3 went down — the temperature sensor kept triggering the overheating alarm, reading about 40 degrees above setpoint. I isolated the machine and called maintenance to check the cooling fan. Turned out the fan had a blocked filter cutting airflow. We cleared the blockage and restarted the machine. Lesson: cooling fan filters on Moulding Machine 3 should be checked every week.'
@@ -116,9 +117,17 @@ export default function CapturePage() {
   const [relatedNote, setRelatedNote] = useState<ShiftNote | null>(null)
 
   useEffect(() => {
-    setDeviceId(getDeviceId())
+    const id = getDeviceId()
+    setDeviceId(id)
     const stored = JSON.parse(localStorage.getItem('shiftvoice_notes') ?? '[]') as ShiftNote[]
-    setSavedNotes(stored)
+    if (stored.length === 0) {
+      // First visit — seed the shift log with demo notes
+      const seeds = buildSeedNotes(id)
+      localStorage.setItem('shiftvoice_notes', JSON.stringify(seeds))
+      setSavedNotes(seeds)
+    } else {
+      setSavedNotes(stored)
+    }
   }, [])
 
   const handleTranscript = (t: string) => {

@@ -51,10 +51,7 @@ function DemoScriptCard() {
             <button
               onClick={handleCopy}
               className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
-              style={{
-                background: copied ? '#2f8f63' : '#0f5f68',
-                color: '#fff',
-              }}
+              style={{ background: copied ? '#2f8f63' : '#0f5f68', color: '#fff' }}
             >
               {copied ? '✓ Copied' : 'Copy text'}
             </button>
@@ -65,9 +62,63 @@ function DemoScriptCard() {
   )
 }
 
+/** Compact scrollable event log shown on the capture screen. */
+function ShiftEventLog({ notes }: { notes: ShiftNote[] }) {
+  if (notes.length === 0) return null
+
+  // Show oldest → newest (chronological timeline)
+  const sorted = [...notes].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  )
+
+  return (
+    <div className="w-full mt-8">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#687d85' }}>
+          Shift log — {notes.length} event{notes.length !== 1 ? 's' : ''}
+        </p>
+      </div>
+      <div
+        className="flex flex-col gap-2 max-h-72 overflow-y-auto pr-1"
+        style={{ scrollbarWidth: 'thin' }}
+      >
+        {sorted.map(note => (
+          <div
+            key={note.id}
+            className="flex items-start gap-3 rounded-xl px-4 py-3"
+            style={{ background: '#fff', border: '1px solid rgba(18,35,44,0.08)' }}
+          >
+            {/* Score dot */}
+            <span
+              className="mt-0.5 w-2.5 h-2.5 rounded-full shrink-0"
+              style={{ background: note.isComplete ? '#2f8f63' : '#c68a22', marginTop: '5px' }}
+            />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold truncate" style={{ color: '#12232c' }}>
+                  {note.structured.machine ?? 'Unknown machine'}
+                </span>
+                <span className="text-xs shrink-0" style={{ color: '#687d85' }}>
+                  {new Date(note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+              {note.structured.reason && (
+                <p className="text-xs mt-0.5 truncate" style={{ color: '#687d85' }}>
+                  {note.structured.reason}
+                  {note.structured.actionTaken ? ` — ${note.structured.actionTaken}` : ''}
+                </p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 type Step = 'capture' | 'review' | 'saved'
 
-const SHIFT_WINDOW_MS = 8 * 60 * 60 * 1000 // 8 hours = one shift
+const SHIFT_WINDOW_MS = 8 * 60 * 60 * 1000
 
 function getDeviceId(): string {
   if (typeof window === 'undefined') return 'unknown'
@@ -85,19 +136,17 @@ function saveNoteLocally(note: ShiftNote) {
   localStorage.setItem('shiftvoice_notes', JSON.stringify(existing))
 }
 
-/** Returns the most recent note from this shift that shares machine or reason with the new note. */
+/** Returns the most recent same-shift note that shares machine or reason. */
 function findRelatedNote(newNote: ShiftNote, existingNotes: ShiftNote[]): ShiftNote | null {
   const shiftStart = Date.now() - SHIFT_WINDOW_MS
   for (const n of existingNotes) {
     if (n.id === newNote.id) continue
     if (new Date(n.createdAt).getTime() < shiftStart) continue
     const sameMachine =
-      n.structured.machine &&
-      newNote.structured.machine &&
+      n.structured.machine && newNote.structured.machine &&
       n.structured.machine.toLowerCase() === newNote.structured.machine.toLowerCase()
     const sameReason =
-      n.structured.reason &&
-      newNote.structured.reason &&
+      n.structured.reason && newNote.structured.reason &&
       n.structured.reason.toLowerCase() === newNote.structured.reason.toLowerCase()
     if (sameMachine || sameReason) return n
   }
@@ -120,8 +169,9 @@ export default function CapturePage() {
     const id = getDeviceId()
     setDeviceId(id)
     const stored = JSON.parse(localStorage.getItem('shiftvoice_notes') ?? '[]') as ShiftNote[]
-    if (stored.length === 0) {
-      // First visit — seed the shift log with demo notes
+    // Re-seed whenever only seed notes are present (keeps timestamps fresh across sessions)
+    const onlySeedNotes = stored.length === 0 || stored.every(n => n.id.startsWith('seed-'))
+    if (onlySeedNotes) {
       const seeds = buildSeedNotes(id)
       localStorage.setItem('shiftvoice_notes', JSON.stringify(seeds))
       setSavedNotes(seeds)
@@ -137,7 +187,6 @@ export default function CapturePage() {
 
   const handleSave = (note: ShiftNote) => {
     saveNoteLocally(note)
-    // Detect related note before updating savedNotes state
     const related = findRelatedNote(note, savedNotes)
     setRelatedNote(related)
     setSavedNote(note)
@@ -189,7 +238,7 @@ export default function CapturePage() {
               className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
               style={{
                 background: s === step ? '#0f5f68' : step === 'saved' || (step === 'review' && i === 0) ? '#2f8f63' : '#e0d9cf',
-                color: s === step || (step === 'saved') || (step === 'review' && i === 0) ? '#fff' : '#687d85',
+                color: s === step || step === 'saved' || (step === 'review' && i === 0) ? '#fff' : '#687d85',
               }}
             >
               {step === 'saved' || (step === 'review' && i === 0) ? '✓' : i + 1}
@@ -203,6 +252,7 @@ export default function CapturePage() {
 
       {/* Content */}
       <div className="flex-1 px-4 pb-12 max-w-2xl mx-auto w-full">
+
         {step === 'capture' && (
           <>
             <h1 className="text-2xl font-bold text-center mb-2" style={{ color: '#12232c' }}>
@@ -213,6 +263,7 @@ export default function CapturePage() {
             </p>
             <DemoScriptCard />
             <VoiceCapture onTranscript={handleTranscript} />
+            <ShiftEventLog notes={savedNotes} />
           </>
         )}
 
@@ -249,31 +300,20 @@ export default function CapturePage() {
               <p className="text-sm" style={{ color: '#687d85' }}>
                 {savedNote.isComplete
                   ? `Completeness: ${savedNote.completenessScore}/100 — fully captured`
-                  : `Completeness: ${savedNote.completenessScore}/100 — marked incomplete`
-                }
+                  : `Completeness: ${savedNote.completenessScore}/100 — marked incomplete`}
               </p>
             </div>
 
-            {/* Summary card */}
+            {/* Saved note summary card */}
             <div
               className="w-full rounded-2xl p-5 shadow-sm flex flex-col gap-3 text-sm"
               style={{ background: '#fff', color: '#12232c' }}
             >
-              {savedNote.structured.reason && (
-                <Row label="Reason" value={savedNote.structured.reason} />
-              )}
-              {savedNote.structured.machine && (
-                <Row label="Machine" value={savedNote.structured.machine} />
-              )}
-              {savedNote.structured.component && (
-                <Row label="Component" value={savedNote.structured.component} />
-              )}
-              {savedNote.structured.actionTaken && (
-                <Row label="Action" value={savedNote.structured.actionTaken} />
-              )}
-              {savedNote.structured.lesson && (
-                <Row label="Lesson" value={savedNote.structured.lesson} />
-              )}
+              {savedNote.structured.reason && <Row label="Reason" value={savedNote.structured.reason} />}
+              {savedNote.structured.machine && <Row label="Machine" value={savedNote.structured.machine} />}
+              {savedNote.structured.component && <Row label="Component" value={savedNote.structured.component} />}
+              {savedNote.structured.actionTaken && <Row label="Action" value={savedNote.structured.actionTaken} />}
+              {savedNote.structured.lesson && <Row label="Lesson" value={savedNote.structured.lesson} />}
               {savedNote.structured.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 pt-1">
                   {savedNote.structured.tags.map(t => (
@@ -301,12 +341,8 @@ export default function CapturePage() {
                   This note matches your{' '}
                   <strong style={{ color: '#12232c' }}>{formatTime(relatedNote.createdAt)}</strong>{' '}
                   note
-                  {relatedNote.structured.machine
-                    ? ` on ${relatedNote.structured.machine}`
-                    : ''}
-                  {relatedNote.structured.reason
-                    ? ` — ${relatedNote.structured.reason}`
-                    : ''}
+                  {relatedNote.structured.machine ? ` on ${relatedNote.structured.machine}` : ''}
+                  {relatedNote.structured.reason ? ` — ${relatedNote.structured.reason}` : ''}
                   . Both are saved separately in this shift&apos;s log.
                 </p>
               </div>
@@ -320,7 +356,6 @@ export default function CapturePage() {
               Capture another note
             </button>
 
-            {/* Shift summary — shown once there are notes */}
             <div className="w-full mt-4">
               <ShiftSummary notes={savedNotes} label={`Device ${deviceId}`} />
             </div>

@@ -50,3 +50,5 @@ gemma_test1.json
 gemma_test2.json
 llm_test.json
 summary_result.json
+
+.vercel

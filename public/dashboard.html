@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShiftVoice — Live Demo</title>
+  <title>ShiftVoice — Parquet Factory Demo</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -301,6 +301,24 @@
     .type-bar-fill { height: 100%; border-radius: 999px; }
     .type-bar-count { font-size: 0.6rem; font-weight: 700; color: #687d85; min-width: 12px; text-align: right; }
 
+    /* Shift event log */
+    .event-log-list { display: flex; flex-direction: column; gap: 5px; overflow-y: auto; max-height: 160px; }
+    .event-log-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      background: rgba(255,251,245,0.9);
+      border: 1px solid rgba(18,35,44,0.08);
+      border-radius: 8px;
+      padding: 6px 9px;
+    }
+    .event-log-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+    .dot-complete { background: #2f8f63; }
+    .dot-incomplete { background: #c68a22; }
+    .event-log-machine { font-size: 0.65rem; font-weight: 600; color: #12232c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .event-log-reason { font-size: 0.6rem; color: #687d85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .event-log-time { font-size: 0.58rem; color: #687d85; flex-shrink: 0; margin-left: auto; padding-left: 4px; }
+
     /* Open items */
     .open-list { display: flex; flex-direction: column; gap: 6px; }
     .open-item {
@@ -360,14 +378,14 @@
   <div class="brand">SHIFT<span>VOICE</span></div>
   <div class="vdiv"></div>
   <span class="bar-label">Shift</span>
-  <span class="bar-value">Morning · Line 3 · 06:00–14:00</span>
+  <span class="bar-value">Morning · Press Hall · 06:00–14:00</span>
   <div class="vdiv"></div>
   <span class="bar-label">Supervisor</span>
-  <span class="bar-value">M. Kowalski</span>
+  <span class="bar-value">A. Marchetti</span>
   <div class="bar-stats">
-    <div class="stat-chip"><span class="dot dot-teal"></span>8 events</div>
+    <div class="stat-chip"><span class="dot dot-teal"></span>7 events</div>
     <div class="stat-chip"><span class="dot dot-amber"></span>3 open</div>
-    <div class="stat-chip"><span class="dot dot-green"></span>5 resolved</div>
+    <div class="stat-chip"><span class="dot dot-green"></span>4 resolved</div>
   </div>
 </div>
 
@@ -383,49 +401,49 @@
       <div class="card" data-id="1" onclick="toggleCard(this)">
         <div class="card-header">
           <span class="card-type type-maint">Maintenance</span>
-          <span class="card-time">07:14</span>
+          <span class="card-time">07:22</span>
         </div>
-        <div class="card-title">High bearing temperature on pump P-301</div>
-        <div class="card-preview">Noticed temperature alarm at 07:12. Checked lubrication — reservoir was low. Added 200ml grease, temp came down within 8 minutes.</div>
+        <div class="card-title">Hot Press 2 hydraulic seal failure</div>
+        <div class="card-preview">Seal blew on cylinder — oil spraying onto press frame, automatic safety shutdown. Called emergency maintenance. Machine down 75 min.</div>
         <div class="card-footer">
-          <span class="card-operator">J. Nowak</span>
+          <span class="card-operator">P. Kowalczyk</span>
           <span class="status-badge status-resolved">Resolved</span>
         </div>
       </div>
 
       <div class="card" data-id="2" onclick="toggleCard(this)">
         <div class="card-header">
-          <span class="card-type type-ops">Operations</span>
-          <span class="card-time">08:42</span>
+          <span class="card-type type-quality">Quality</span>
+          <span class="card-time">08:55</span>
         </div>
-        <div class="card-title">Product changeover Line 1 → Product B</div>
-        <div class="card-preview">Changeover started 08:42, completed 09:05. Total 23 min — 4 min over target. Delay due to tooling cart missing from station 2.</div>
+        <div class="card-title">UV Coating Line — Zone 2 lamp failure</div>
+        <div class="card-preview">Zone 2 lamp went dark mid-run. Boards with tacky, under-cured surface. Batch of ~180 boards isolated. UV lamp replaced.</div>
         <div class="card-footer">
-          <span class="card-operator">A. Wiśniewska</span>
-          <span class="status-badge status-resolved">Resolved</span>
+          <span class="card-operator">M. Russo</span>
+          <span class="status-badge status-open">Open</span>
         </div>
       </div>
 
       <div class="card" data-id="3" onclick="toggleCard(this)">
         <div class="card-header">
-          <span class="card-type type-maint">Maintenance</span>
-          <span class="card-time">09:31</span>
+          <span class="card-type type-quality">Quality</span>
+          <span class="card-time">09:48</span>
         </div>
-        <div class="card-title">Conveyor jam at station 5 — foreign object</div>
-        <div class="card-preview">Line stopped at 09:29. Found plastic debris lodged in conveyor guide rail. Cleared and restarted. No damage to belt. Source unclear — checking upstream.</div>
+        <div class="card-title">Wide Belt Sander — surface scratch defect</div>
+        <div class="card-preview">Sanding belt worn unevenly — linear scratches on ~600 boards. Belt past service life, not changed at scheduled interval.</div>
         <div class="card-footer">
           <span class="card-operator">J. Nowak</span>
-          <span class="status-badge status-monitoring">Monitoring</span>
+          <span class="status-badge status-resolved">Resolved</span>
         </div>
       </div>
 
       <div class="card" data-id="4" onclick="toggleCard(this)">
         <div class="card-header">
           <span class="card-type type-quality">Quality</span>
-          <span class="card-time">10:55</span>
+          <span class="card-time">10:40</span>
         </div>
-        <div class="card-title">Batch #4471 placed on quality hold</div>
-        <div class="card-preview">Moisture reading 4.2% against spec max 3.8%. QA notified at 10:58. Batch isolated in zone B. Awaiting QA decision on rework or scrap.</div>
+        <div class="card-title">Moisture chamber — boards warping</div>
+        <div class="card-preview">Moisture reading 9.2% against spec max 8.0%. Boards showing early bow. QC notified. Humidity controller calibration overdue.</div>
         <div class="card-footer">
           <span class="card-operator">T. Grabowski</span>
           <span class="status-badge status-open">Open</span>
@@ -434,27 +452,40 @@
 
       <div class="card" data-id="5" onclick="toggleCard(this)">
         <div class="card-header">
-          <span class="card-type type-ops">Operations</span>
-          <span class="card-time">11:22</span>
+          <span class="card-type type-maint">Maintenance</span>
+          <span class="card-time">11:18</span>
         </div>
-        <div class="card-title">OEE dip — micro-stops on Line 2, hour 5</div>
-        <div class="card-preview">OEE dropped to 67% in hour 5 due to repeated micro-stops on filling station. Pattern suggests sensor drift on position switch PS-14. Flagged for PM.</div>
+        <div class="card-title">Hot Press 1 — platen temperature drift</div>
+        <div class="card-preview">Upper platen 12°C below setpoint. Loose thermocouple connection found. Re-seated connector — temperature recovered in 15 min. Three boards sent to QC.</div>
         <div class="card-footer">
-          <span class="card-operator">A. Wiśniewska</span>
-          <span class="status-badge status-open">Open</span>
+          <span class="card-operator">P. Kowalczyk</span>
+          <span class="status-badge status-monitoring">Monitoring</span>
         </div>
       </div>
 
       <div class="card" data-id="6" onclick="toggleCard(this)">
         <div class="card-header">
-          <span class="card-type type-safety">Safety</span>
-          <span class="card-time">13:45</span>
+          <span class="card-type type-ops">Operations</span>
+          <span class="card-time">12:55</span>
         </div>
-        <div class="card-title">Spill at filling station — slip risk cleared</div>
-        <div class="card-preview">Minor product spill during container swap. Area secured with cones, cleaned within 6 min. Near-miss report submitted. Drain guard inspection recommended.</div>
+        <div class="card-title">T&amp;G Line alignment fault — fourth this week</div>
+        <div class="card-preview">Alignment fault on Tongue &amp; Groove Line. Line stopped 18 min. Fourth fault this week. Escalated to engineering — suspected PLC calibration drift.</div>
+        <div class="card-footer">
+          <span class="card-operator">M. Russo</span>
+          <span class="status-badge status-open">Open</span>
+        </div>
+      </div>
+
+      <div class="card" data-id="7" onclick="toggleCard(this)">
+        <div class="card-header">
+          <span class="card-type type-safety">Safety</span>
+          <span class="card-time">13:30</span>
+        </div>
+        <div class="card-title">Glue Spreader 1 — glue pressure drop</div>
+        <div class="card-preview">Glue solenoid valve stuck partially closed. Glue starvation on board edges — both cold presses slowed 30%. Valve manually cleared. Needs replacing.</div>
         <div class="card-footer">
           <span class="card-operator">T. Grabowski</span>
-          <span class="status-badge status-open">Open</span>
+          <span class="status-badge status-resolved">Resolved</span>
         </div>
       </div>
 
@@ -479,24 +510,24 @@
       <div class="report-heading">Shift Report</div>
       <div class="kpi-grid">
         <div class="kpi-card">
+          <div class="kpi-label">Output</div>
+          <div class="kpi-value good">3,240</div>
+          <div class="kpi-sub">m² produced</div>
+        </div>
+        <div class="kpi-card">
           <div class="kpi-label">OEE</div>
-          <div class="kpi-value warn">71%</div>
+          <div class="kpi-value warn">68%</div>
           <div class="kpi-sub">Target: 78%</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Output</div>
-          <div class="kpi-value good">2,840</div>
-          <div class="kpi-sub">units produced</div>
-        </div>
-        <div class="kpi-card">
           <div class="kpi-label">Downtime</div>
-          <div class="kpi-value warn">34 min</div>
-          <div class="kpi-sub">Target: &lt;20 min</div>
+          <div class="kpi-value warn">148 min</div>
+          <div class="kpi-sub">Target: &lt;30 min</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Quality rate</div>
-          <div class="kpi-value good">98.2%</div>
-          <div class="kpi-sub">excl. batch #4471</div>
+          <div class="kpi-label">Thickness tolerance</div>
+          <div class="kpi-value good">±0.2mm</div>
+          <div class="kpi-sub">Spec: ±0.3mm</div>
         </div>
       </div>
     </div>
@@ -506,24 +537,87 @@
       <div class="report-heading">Events by type</div>
       <div class="type-bars">
         <div class="type-bar-row">
+          <span class="type-bar-label">Quality</span>
+          <div class="type-bar-track"><div class="type-bar-fill" style="width:100%;background:#b87d10"></div></div>
+          <span class="type-bar-count">3</span>
+        </div>
+        <div class="type-bar-row">
           <span class="type-bar-label">Maintenance</span>
-          <div class="type-bar-track"><div class="type-bar-fill" style="width:100%;background:#0f5f68"></div></div>
+          <div class="type-bar-track"><div class="type-bar-fill" style="width:67%;background:#0f5f68"></div></div>
           <span class="type-bar-count">2</span>
         </div>
         <div class="type-bar-row">
           <span class="type-bar-label">Operations</span>
-          <div class="type-bar-track"><div class="type-bar-fill" style="width:100%;background:#217a4e"></div></div>
-          <span class="type-bar-count">2</span>
-        </div>
-        <div class="type-bar-row">
-          <span class="type-bar-label">Quality</span>
-          <div class="type-bar-track"><div class="type-bar-fill" style="width:50%;background:#b87d10"></div></div>
+          <div class="type-bar-track"><div class="type-bar-fill" style="width:33%;background:#217a4e"></div></div>
           <span class="type-bar-count">1</span>
         </div>
         <div class="type-bar-row">
           <span class="type-bar-label">Safety</span>
-          <div class="type-bar-track"><div class="type-bar-fill" style="width:50%;background:#c0402e"></div></div>
+          <div class="type-bar-track"><div class="type-bar-fill" style="width:33%;background:#c0402e"></div></div>
           <span class="type-bar-count">1</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Shift Event Log -->
+    <div>
+      <div class="report-heading">Shift Event Log</div>
+      <div class="event-log-list" id="eventLogList">
+        <div class="event-log-item">
+          <span class="event-log-dot dot-complete"></span>
+          <div style="flex:1;min-width:0;">
+            <div class="event-log-machine">Hot Press 2</div>
+            <div class="event-log-reason">hydraulic seal failure — called maintenance</div>
+          </div>
+          <span class="event-log-time">07:22</span>
+        </div>
+        <div class="event-log-item">
+          <span class="event-log-dot dot-incomplete"></span>
+          <div style="flex:1;min-width:0;">
+            <div class="event-log-machine">UV Coating Line</div>
+            <div class="event-log-reason">UV cure failure — replaced UV lamp</div>
+          </div>
+          <span class="event-log-time">08:55</span>
+        </div>
+        <div class="event-log-item">
+          <span class="event-log-dot dot-complete"></span>
+          <div style="flex:1;min-width:0;">
+            <div class="event-log-machine">Wide Belt Sander</div>
+            <div class="event-log-reason">sanding belt wear — replaced sanding belt</div>
+          </div>
+          <span class="event-log-time">09:48</span>
+        </div>
+        <div class="event-log-item">
+          <span class="event-log-dot dot-incomplete"></span>
+          <div style="flex:1;min-width:0;">
+            <div class="event-log-machine">Moisture Conditioning Chamber</div>
+            <div class="event-log-reason">moisture deviation — adjusted setpoints</div>
+          </div>
+          <span class="event-log-time">10:40</span>
+        </div>
+        <div class="event-log-item">
+          <span class="event-log-dot dot-complete"></span>
+          <div style="flex:1;min-width:0;">
+            <div class="event-log-machine">Hot Press 1</div>
+            <div class="event-log-reason">press temperature drift — raised platen setpoint</div>
+          </div>
+          <span class="event-log-time">11:18</span>
+        </div>
+        <div class="event-log-item">
+          <span class="event-log-dot dot-incomplete"></span>
+          <div style="flex:1;min-width:0;">
+            <div class="event-log-machine">Tongue &amp; Groove Line</div>
+            <div class="event-log-reason">alignment drift — escalated to engineering</div>
+          </div>
+          <span class="event-log-time">12:55</span>
+        </div>
+        <div class="event-log-item">
+          <span class="event-log-dot dot-complete"></span>
+          <div style="flex:1;min-width:0;">
+            <div class="event-log-machine">Glue Spreader 1</div>
+            <div class="event-log-reason">glue starvation — cleared solenoid valve</div>
+          </div>
+          <span class="event-log-time">13:30</span>
         </div>
       </div>
     </div>
@@ -533,16 +627,16 @@
       <div class="report-heading">Open items for next shift</div>
       <div class="open-list">
         <div class="open-item">
-          <div class="open-item-title">Batch #4471 quality hold</div>
-          <div class="open-item-meta">Awaiting QA disposition · T. Grabowski</div>
+          <div class="open-item-title">UV Coating batch — QC disposition pending</div>
+          <div class="open-item-meta">~180 boards isolated · M. Russo</div>
         </div>
         <div class="open-item">
-          <div class="open-item-title">Sensor PS-14 — OEE micro-stops</div>
-          <div class="open-item-meta">PM flagged · Line 2 filling station</div>
+          <div class="open-item-title">Moisture chamber calibration overdue</div>
+          <div class="open-item-meta">Boards warping · T. Grabowski</div>
         </div>
         <div class="open-item">
-          <div class="open-item-title">Safety NM #NM-2024-047</div>
-          <div class="open-item-meta">Drain guard inspection pending</div>
+          <div class="open-item-title">T&amp;G Line alignment — engineering review</div>
+          <div class="open-item-meta">4th fault this week · PLC calibration suspected</div>
         </div>
       </div>
     </div>
@@ -550,7 +644,7 @@
     <!-- Handover note -->
     <div class="handover-box">
       <div class="handover-label">Supervisor handover note</div>
-      <div class="handover-text">Line 2 running at reduced pace — watch PS-14 on filling station. QA batch decision expected by 15:00. Tooling pre-staging checklist updated for afternoon shift. Good shift overall, team handled the spill well.</div>
+      <div class="handover-text">Hot Press 2 back in service — watch hydraulic pressure gauge for any repeat drop. UV batch QC decision expected by 15:00. T&amp;G Line engineering booked for tomorrow morning. Sanding belt check now on shift-start checklist. Good team response on the hydraulic incident.</div>
     </div>
 
   </div>
@@ -559,52 +653,60 @@
 <script>
 const DETAILS = {
   "1": {
-    title: "High bearing temperature — Pump P-301",
-    subtitle: "07:14 · Maintenance · J. Nowak",
-    observation: "Temperature alarm triggered at 07:12. Operator physically checked bearing housing — surface temp ~78°C against normal 55–60°C. Lubrication reservoir found low (below min marker).",
-    action: "Added 200 ml grease (Shell Gadus S2 V220). Monitored for 8 minutes — temperature returned to 59°C. No unusual noise or vibration.",
-    tags: ["P-301", "Bearing", "Lubrication", "Alarm"],
-    status: "Resolved — no further action needed this shift"
+    title: "Hot Press 2 — Hydraulic Cylinder Seal Failure",
+    subtitle: "07:22 · Maintenance · P. Kowalczyk",
+    observation: "Hydraulic cylinder seal blew at 07:18 — oil spraying onto press frame, automatic safety shutdown triggered. Operator isolated machine and called emergency maintenance immediately.",
+    action: "Maintenance replaced hydraulic cylinder seal and topped up hydraulic fluid. Machine restarted at 08:37. Two production runs lost. Second seal failure on this press in six weeks.",
+    tags: ["Hot Press 2", "Hydraulic", "Seal", "Downtime"],
+    status: "Resolved — full hydraulic inspection recommended before end of week"
   },
   "2": {
-    title: "Product changeover Line 1 → Product B",
-    subtitle: "08:42 · Operations · A. Wiśniewska",
-    observation: "Changeover commenced at scheduled time 08:42. Tooling cart for station 2 was not staged — had to retrieve from storage bay (approx. 4 min delay).",
-    action: "Changeover completed 09:05. Total duration 23 min vs 19 min target. Line restarted, first-off check passed. Raised action: tooling pre-staging to be added to end-of-shift checklist.",
-    tags: ["Line 1", "Changeover", "Product B", "Tooling"],
-    status: "Resolved — action item raised for checklist update"
+    title: "UV Coating Line — Zone 2 UV Lamp Failure",
+    subtitle: "08:55 · Quality · M. Russo",
+    observation: "Zone 2 UV lamp failed mid-run at 08:52. Boards emerging with tacky, under-cured surface coating. Operator stopped line immediately and isolated batch of approximately 180 boards.",
+    action: "QC notified at 08:55. UV lamp replaced by maintenance. Line restarted at 09:32. Batch under QC inspection — disposition (rework or scrap) pending.",
+    tags: ["UV Coating", "UV Lamp", "Under-cure", "Quality Hold"],
+    status: "Open — awaiting QC disposition on 180 boards"
   },
   "3": {
-    title: "Conveyor jam — Station 5 foreign object",
-    subtitle: "09:31 · Maintenance · J. Nowak",
-    observation: "Line stopped at 09:29 with jam alarm. Plastic debris (approx. 15×5cm piece of packaging wrap) found lodged in guide rail on conveyor C-05. Source not immediately identified.",
-    action: "Debris removed. Belt inspected — no visible damage. Line restarted at 09:34. Investigating upstream stations for packaging integrity. Monitoring for recurrence.",
-    tags: ["Conveyor C-05", "Station 5", "Jam", "Foreign Object"],
-    status: "Monitoring — source investigation ongoing"
+    title: "Wide Belt Sander — Sanding Belt Wear Causing Surface Scratches",
+    subtitle: "09:48 · Quality · J. Nowak",
+    observation: "Uneven belt wear producing linear scratch marks across board surfaces. Approximately 600 boards affected. Belt past end of service life — not changed at scheduled interval.",
+    action: "Batch quarantined for visual inspection. Work order raised for belt replacement. Belt replaced at 10:15. Affected boards being sorted — minor scratches may be reclassified rather than scrapped.",
+    tags: ["Wide Belt Sander", "Sanding Belt", "Surface Scratch", "Quality"],
+    status: "Resolved — belt replaced, batch under sorting inspection"
   },
   "4": {
-    title: "Quality hold — Batch #4471 moisture deviation",
-    subtitle: "10:55 · Quality · T. Grabowski",
-    observation: "In-line moisture sensor read 4.2% at 10:55 — above max spec of 3.8%. Lab confirmatory sample taken at 11:05 (result pending). Batch #4471 (340 kg) isolated in Zone B.",
-    action: "QA notified at 10:58. Batch hold tag applied. Production continued on next batch with increased moisture monitoring frequency (every 20 min).",
-    tags: ["Batch #4471", "Moisture", "QA Hold", "Zone B"],
-    status: "Open — awaiting QA disposition decision"
+    title: "Moisture Conditioning Chamber — Board Warping",
+    subtitle: "10:40 · Quality · T. Grabowski",
+    observation: "In-line moisture readings at 9.2% against spec max of 8.0%. Boards from last two hours showing early bow and warp. Humidity controller suspected to be drifting — calibration overdue by three weeks.",
+    action: "Chamber setpoints adjusted temporarily. Work order raised for calibration. Boards produced since 09:00 held pending QC review. QC sample results expected by 14:00.",
+    tags: ["Moisture Chamber", "Moisture Deviation", "Warp", "QC Hold"],
+    status: "Open — calibration work order raised, boards on hold"
   },
   "5": {
-    title: "OEE dip — micro-stops filling station, Line 2",
-    subtitle: "11:22 · Operations · A. Wiśniewska",
-    observation: "OEE dropped to 67% in production hour 5 (10:00–11:00). Filling station repeatedly pausing 3–8 seconds, approximately every 12–15 cycles. No fault codes logged.",
-    action: "Suspected position switch PS-14 sensor drift based on similar event 3 weeks ago. Maintenance informed and flagged for next PM window. Production continued at reduced pace.",
-    tags: ["Line 2", "Filling Station", "PS-14", "OEE", "Micro-stop"],
-    status: "Open — PM flagged for sensor PS-14"
+    title: "Hot Press 1 — Platen Temperature Drift",
+    subtitle: "11:18 · Maintenance · P. Kowalczyk",
+    observation: "Upper platen reading 12°C below setpoint at 11:14. Press cycle paused. Loose thermocouple connection found on controller board. Three boards already in press at time of discovery.",
+    action: "Thermocouple connector re-seated. Heating zone restarted — temperature returned to setpoint within 15 minutes. Three boards sent to QC for delamination check.",
+    tags: ["Hot Press 1", "Thermocouple", "Temperature Drift", "Delamination Risk"],
+    status: "Monitoring — press running normally, QC checking three boards"
   },
   "6": {
-    title: "Spill at filling station — slip hazard cleared",
-    subtitle: "13:45 · Safety · T. Grabowski",
-    observation: "Approximately 2L product spill occurred during manual container swap at filling station. Area immediately secured with safety cones. No personnel in contact with spill.",
-    action: "Area cleaned within 6 minutes. Near-miss report #NM-2024-047 submitted. Recommended drain guard inspection added to next maintenance round. Team briefed.",
-    tags: ["Safety", "Spill", "Filling Station", "Near-Miss"],
-    status: "Open — NM report submitted, drain guard inspection pending"
+    title: "T&G Line Alignment Fault — Fourth This Week",
+    subtitle: "12:55 · Operations · M. Russo",
+    observation: "Alignment fault triggered at 12:52 — fourth occurrence this week, each causing 18-minute stoppage. Alignment guide reset and manual measurement confirmed boards within tolerance. Maintenance found no defect in guide rail.",
+    action: "Reset alignment guide. Line restarted at 13:10. Escalated to engineering — suspected PLC calibration drift. Engineering review scheduled for tomorrow morning.",
+    tags: ["T&G Line", "Alignment", "PLC", "Downtime", "Recurring"],
+    status: "Open — engineering review booked, root cause not confirmed"
+  },
+  "7": {
+    title: "Glue Spreader 1 — Glue Pressure Drop (Floor-Wide Impact)",
+    subtitle: "13:30 · Safety · T. Grabowski",
+    observation: "Glue feed pressure fell below minimum at 13:26 — boards leaving spreader with glue starvation on edges. Both Cold Press 1 and 2 had to reduce cycle speed. 30% throughput loss for 35 minutes.",
+    action: "Maintenance cleared sticking solenoid valve manually at 14:01. Glue pressure restored. Valve must be replaced — has been partially sticking for ten days. Boards produced during starvation window isolated for delamination risk assessment.",
+    tags: ["Glue Spreader 1", "Solenoid Valve", "Glue Starvation", "Delamination Risk"],
+    status: "Resolved — valve cleared, replacement work order raised"
   }
 };
 
@@ -643,6 +745,42 @@ function closeDetail() {
   document.getElementById('detail-panel').classList.remove('is-visible');
   openId = null;
 }
+
+// Merge captured notes from localStorage into the event log
+(function mergeEventLog() {
+  try {
+    const raw = localStorage.getItem('shiftvoice_notes');
+    if (!raw) return;
+    const notes = JSON.parse(raw);
+    if (!notes.length) return;
+
+    const sorted = [...notes].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    const list = document.getElementById('eventLogList');
+    const frag = document.createDocumentFragment();
+
+    sorted.forEach(note => {
+      const time = new Date(note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+      const machine = note.structured?.machine || 'Unknown machine';
+      const reason = note.structured?.reason || '';
+      const action = note.structured?.actionTaken || '';
+      const dotClass = note.isComplete ? 'dot-complete' : 'dot-incomplete';
+
+      const item = document.createElement('div');
+      item.className = 'event-log-item';
+      item.innerHTML = `
+        <span class="event-log-dot ${dotClass}"></span>
+        <div style="flex:1;min-width:0;">
+          <div class="event-log-machine">${machine.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+          ${reason || action ? `<div class="event-log-reason">${(reason + (reason && action ? ' — ' : '') + action).replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>` : ''}
+        </div>
+        <span class="event-log-time">${time}</span>`;
+      frag.appendChild(item);
+    });
+
+    // Prepend live-captured notes above the static demo entries
+    list.insertBefore(frag, list.firstChild);
+  } catch(e) { /* ignore */ }
+})();
 </script>
 </body>
 </html>

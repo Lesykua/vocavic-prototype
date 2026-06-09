@@ -14,11 +14,11 @@ interface NoteReviewProps {
 type FieldKey = keyof Omit<ShiftNoteStructured, 'tags'>
 
 const FIELD_META: Array<{ key: FieldKey; label: string; placeholder: string; weight: number }> = [
-  { key: 'reason',      label: 'Reason for note',   placeholder: 'e.g. overheating, seal failure',        weight: 30 },
-  { key: 'machine',     label: 'Machine / line',     placeholder: 'e.g. moulding machine 3, line 2',       weight: 25 },
-  { key: 'actionTaken', label: 'Action taken',       placeholder: 'e.g. called maintenance, changed seal', weight: 25 },
-  { key: 'component',   label: 'Component involved', placeholder: 'e.g. seal, motor, bearing',             weight: 10 },
-  { key: 'lesson',      label: 'Lesson learned',     placeholder: 'e.g. inspect seals weekly',             weight: 10 },
+  { key: 'reason',      label: 'Reason for note',   placeholder: 'e.g. press temperature drift, board jam',          weight: 30 },
+  { key: 'machine',     label: 'Machine / line',     placeholder: 'e.g. Hot Press 1, UV Coating Line',               weight: 25 },
+  { key: 'actionTaken', label: 'Action taken',       placeholder: 'e.g. raised platen setpoint, replaced sanding belt', weight: 25 },
+  { key: 'component',   label: 'Component involved', placeholder: 'e.g. press platen, glue roller, UV lamp',         weight: 10 },
+  { key: 'lesson',      label: 'Lesson learned',     placeholder: 'e.g. check belt wear at each shift start',        weight: 10 },
 ]
 
 function scoreFromFields(fields: Omit<ShiftNoteStructured, 'tags'>): number {

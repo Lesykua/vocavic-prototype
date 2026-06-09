@@ -8,7 +8,7 @@ import { ShiftNote } from '@/lib/types'
 import { buildSeedNotes } from '@/lib/seed-notes'
 
 const DEMO_SCRIPT =
-  'Around 2am, Moulding Machine 3 went down — the temperature sensor kept triggering the overheating alarm, reading about 40 degrees above setpoint. I isolated the machine and called maintenance to check the cooling fan. Turned out the fan had a blocked filter cutting airflow. We cleared the blockage and restarted the machine. Lesson: cooling fan filters on Moulding Machine 3 should be checked every week.'
+  'Around 9am, Hot Press 1 showed a platen temperature deviation — the upper platen was reading about 12 degrees below setpoint. I paused the press cycle and found a loose thermocouple connection on the controller board. I re-seated the connector, restarted the heating zone, and temperature came back to normal within 15 minutes. We had three boards in the press that need to go to QC for a delamination check. Suggest we add quarterly thermocouple connection checks to the press maintenance schedule.'
 
 function DemoScriptCard() {
   const [open, setOpen] = useState(false)
@@ -58,60 +58,6 @@ function DemoScriptCard() {
           </div>
         </div>
       )}
-    </div>
-  )
-}
-
-/** Compact scrollable event log shown on the capture screen. */
-function ShiftEventLog({ notes }: { notes: ShiftNote[] }) {
-  if (notes.length === 0) return null
-
-  // Show oldest → newest (chronological timeline)
-  const sorted = [...notes].sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-  )
-
-  return (
-    <div className="w-full mt-8">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#687d85' }}>
-          Shift log — {notes.length} event{notes.length !== 1 ? 's' : ''}
-        </p>
-      </div>
-      <div
-        className="flex flex-col gap-2 max-h-72 overflow-y-auto pr-1"
-        style={{ scrollbarWidth: 'thin' }}
-      >
-        {sorted.map(note => (
-          <div
-            key={note.id}
-            className="flex items-start gap-3 rounded-xl px-4 py-3"
-            style={{ background: '#fff', border: '1px solid rgba(18,35,44,0.08)' }}
-          >
-            {/* Score dot */}
-            <span
-              className="mt-0.5 w-2.5 h-2.5 rounded-full shrink-0"
-              style={{ background: note.isComplete ? '#2f8f63' : '#c68a22', marginTop: '5px' }}
-            />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-semibold truncate" style={{ color: '#12232c' }}>
-                  {note.structured.machine ?? 'Unknown machine'}
-                </span>
-                <span className="text-xs shrink-0" style={{ color: '#687d85' }}>
-                  {new Date(note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
-              </div>
-              {note.structured.reason && (
-                <p className="text-xs mt-0.5 truncate" style={{ color: '#687d85' }}>
-                  {note.structured.reason}
-                  {note.structured.actionTaken ? ` — ${note.structured.actionTaken}` : ''}
-                </p>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   )
 }
@@ -263,7 +209,6 @@ export default function CapturePage() {
             </p>
             <DemoScriptCard />
             <VoiceCapture onTranscript={handleTranscript} />
-            <ShiftEventLog notes={savedNotes} />
           </>
         )}
 

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
-  <title>ShiftVoice — Operator Notes</title>
+  <title>ShiftVoice — Parquet Operations</title>
   <style>
     :root {
       --bg: #f4efe6;
@@ -1420,14 +1420,14 @@
       <div class="topbar-left">
         <div class="brand">
           <div class="brand-wordmark">ShiftVoice</div>
-          <div class="brand-subtle">Operator Notes</div>
+          <div class="brand-subtle">Parquet Operations</div>
         </div>
         <div class="control-group">
           <div class="control">
             <label for="siteSelect">Site</label>
             <select id="siteSelect">
-              <option>North Hall</option>
-              <option>South Hall</option>
+              <option>Press Hall</option>
+              <option>Finishing Hall</option>
               <option>All Sites</option>
             </select>
           </div>
@@ -1435,8 +1435,8 @@
             <label for="lineSelect">Line</label>
             <select id="lineSelect">
               <option>All Lines</option>
-              <option>Line 1</option>
-              <option>Line 2</option>
+              <option>Press Line 1</option>
+              <option>Press Line 2</option>
             </select>
           </div>
           <div class="control">
@@ -1496,6 +1496,7 @@
       </div>
       <aside class="side-column">
         <section class="panel side-card" id="needsAttentionCard"></section>
+        <section class="panel side-card" id="shiftEventLogCard"></section>
       </aside>
     </section>
   </div>
@@ -1511,31 +1512,31 @@
 
     function snapshots(temp, pressure, speed) {
       return [
-        { name: "Seal Temp", value: temp, unit: "C" },
-        { name: "Jaw Pressure", value: pressure, unit: "bar" },
-        { name: "Speed", value: speed, unit: "packs/min" }
+        { name: "Press Temp", value: temp, unit: "°C" },
+        { name: "Platen Pressure", value: pressure, unit: "bar" },
+        { name: "Feed Speed", value: speed, unit: "m/min" }
       ];
     }
 
     const mockNotes = [
       {
         id: "n01",
-        ts: "2026-04-03T07:18:00",
-        site: "North Hall",
-        line: "Line 1",
+        ts: "2026-04-03T07:22:00",
+        site: "Press Hall",
+        line: "Press Line 1",
         operator: "AB",
-        asset: "Line 1 / Sealer",
-        transcriptShort: "Seal edge looked light on the first cartons after warm-up, so jaw temperature went up two degrees and the next stack is under watch.",
-        transcriptFull: "Seal edge looked light on the first cartons after warm-up. I raised jaw temperature by two degrees and kept the next stack aside for comparison. Please watch the first five packs after the next speed bump because the edge was still pale on one lane before it settled.",
-        tags: { reason: "temperature drift", component: "sealer jaw", action: "raised setpoint" },
+        asset: "Hot Press 1 / Upper Platen",
+        transcriptShort: "Upper platen temperature drifted 8°C below setpoint at start of shift, adjusted setpoint and watching for recovery — same drift pattern as yesterday.",
+        transcriptFull: "Upper platen temperature drifted about 8 degrees below setpoint at shift start. I adjusted the platen setpoint and watched the press for two cycles. Temperature is recovering but not fully stable. This is the same drift pattern we saw yesterday morning. Please watch the first boards from this press against the thickness spec because a low platen temperature can cause inadequate glue cure and delamination risk.",
+        tags: { reason: "press temperature drift", component: "press platen", action: "raised platen setpoint" },
         enriched: true,
         confidence: "med",
         context: {
-          snapshots: snapshots(178, 5.2, 142),
+          snapshots: snapshots(148, 52, 18),
           alarms: [
             { ts: "2026-04-03T07:14:00", code: "TLOW-02" },
-            { ts: "2026-04-03T07:16:00", code: "TEMP-17" },
-            { ts: "2026-04-03T07:18:00", code: "CLR-01" }
+            { ts: "2026-04-03T07:19:00", code: "TEMP-17" },
+            { ts: "2026-04-03T07:22:00", code: "CLR-01" }
           ]
         },
         flags: { needsFollowUp: true, missingAsset: false, untagged: false },
@@ -1543,22 +1544,22 @@
       },
       {
         id: "n02",
-        ts: "2026-04-03T07:46:00",
-        site: "North Hall",
-        line: "Line 1",
+        ts: "2026-04-03T07:58:00",
+        site: "Press Hall",
+        line: "Press Line 2",
         operator: "MK",
-        asset: "Line 1 / Film Feed",
-        transcriptShort: "Film started walking left at the dancer arm during roll settle, guide was centered and tension came back after two passes.",
-        transcriptFull: "Film started walking left at the dancer arm during roll settle. I centered the guide and ran two short passes before tension came back into range. Keep an eye on the next splice because the roll felt twitchy when the tail cleared.",
-        tags: { reason: "film tracking", component: "film dancer", action: "centered film" },
+        asset: "Cold Press 2 / Feed Roller",
+        transcriptShort: "Veneer sheets walking left at feed roller during stack settle, guide re-centered and feed tension stabilised after two slow passes.",
+        transcriptFull: "Veneer sheets were walking left at the feed roller during stack settle on Cold Press 2. I re-centered the infeed guide and ran two slow passes before the feed tension came back into range. Keep an eye on the next veneer species changeover because the roll guide was barely adjusted and may drift again when sheet weight changes.",
+        tags: { reason: "alignment drift", component: "feed roller", action: "re-centered alignment guide" },
         enriched: true,
         confidence: "high",
         context: {
-          snapshots: snapshots(176, 5.0, 146),
+          snapshots: snapshots(22, 38, 12),
           alarms: [
-            { ts: "2026-04-03T07:42:00", code: "FTRK-04" },
-            { ts: "2026-04-03T07:44:00", code: "ROLL-09" },
-            { ts: "2026-04-03T07:46:00", code: "CLR-01" }
+            { ts: "2026-04-03T07:52:00", code: "ALGN-04" },
+            { ts: "2026-04-03T07:55:00", code: "FEED-09" },
+            { ts: "2026-04-03T07:58:00", code: "CLR-01" }
           ]
         },
         flags: { needsFollowUp: false, missingAsset: false, untagged: false },
@@ -1566,22 +1567,22 @@
       },
       {
         id: "n03",
-        ts: "2026-04-03T08:12:00",
-        site: "North Hall",
-        line: "Line 1",
+        ts: "2026-04-03T08:22:00",
+        site: "Press Hall",
+        line: "Press Line 1",
         operator: "JR",
         asset: null,
-        transcriptShort: "Heard a chatter near discharge and saw a short stop, but the station was not called out clearly on the headset note.",
-        transcriptFull: "Heard a chatter near discharge and saw a short stop, but the station was not called out clearly on the headset note. I could not confirm which machine was involved before production resumed. This one needs a station check because the note came through without a clean asset reference.",
+        transcriptShort: "Heard a grinding noise near the crosscut station and saw a brief stop, but the machine was not identified clearly in the voice note.",
+        transcriptFull: "Heard a grinding noise near the crosscut station and saw a brief line stop, but I could not confirm which machine was involved before production resumed. This one needs a station check because the note came through without a clean asset reference and the noise source was not confirmed.",
         tags: { reason: null, component: null, action: null },
         enriched: false,
         confidence: "low",
         context: {
-          snapshots: snapshots(174, 4.9, 138),
+          snapshots: snapshots(150, 51, 17),
           alarms: [
-            { ts: "2026-04-03T08:10:00", code: "UNK-03" },
-            { ts: "2026-04-03T08:11:00", code: "STOP-14" },
-            { ts: "2026-04-03T08:12:00", code: "CLR-02" }
+            { ts: "2026-04-03T08:18:00", code: "UNK-03" },
+            { ts: "2026-04-03T08:20:00", code: "STOP-14" },
+            { ts: "2026-04-03T08:22:00", code: "CLR-02" }
           ]
         },
         flags: { needsFollowUp: true, missingAsset: true, untagged: true },
@@ -1589,22 +1590,22 @@
       },
       {
         id: "n04",
-        ts: "2026-04-03T08:54:00",
-        site: "South Hall",
-        line: "Line 2",
+        ts: "2026-04-03T09:05:00",
+        site: "Finishing Hall",
+        line: "Press Line 2",
         operator: "LC",
-        asset: "Line 2 / Cartoner",
-        transcriptShort: "False reject traced to a dusty photoeye on the cartoner, lens was wiped and the reject stream cleared on the next run.",
-        transcriptFull: "False reject traced to a dusty photoeye on the cartoner. I wiped the lens and watched the next run of cartons clear without another false reject. Please recheck after the next changeover because the dust build-up came back quickly yesterday as well.",
-        tags: { reason: "sensor fouling", component: "cartoner photoeye", action: "cleaned sensor" },
+        asset: "Sorting & Grading Station / Thickness Gauge",
+        transcriptShort: "False reject on the thickness gauge cleared after lens wipe — dust accumulation from the sanding line is fouling the sensor faster than normal.",
+        transcriptFull: "False reject on the thickness gauge at the sorting station. Boards were being rejected that were clearly within spec. I wiped the sensor lens and the next run cleared without a false reject. The dust accumulation is coming from the sanding line running at high speed nearby. Please recheck the sensor after the next belt change because dust builds up fast when the Wide Belt Sander is at full rate.",
+        tags: { reason: "sensor fouling", component: "thickness gauge", action: "cleaned sensor" },
         enriched: true,
         confidence: "high",
         context: {
-          snapshots: snapshots(173, 5.1, 151),
+          snapshots: snapshots(21, 0, 14),
           alarms: [
-            { ts: "2026-04-03T08:50:00", code: "PEYE-12" },
-            { ts: "2026-04-03T08:52:00", code: "REJ-04" },
-            { ts: "2026-04-03T08:54:00", code: "CLR-01" }
+            { ts: "2026-04-03T09:01:00", code: "SENS-12" },
+            { ts: "2026-04-03T09:03:00", code: "REJ-04" },
+            { ts: "2026-04-03T09:05:00", code: "CLR-01" }
           ]
         },
         flags: { needsFollowUp: false, missingAsset: false, untagged: false },
@@ -1612,22 +1613,22 @@
       },
       {
         id: "n05",
-        ts: "2026-04-03T09:33:00",
-        site: "North Hall",
-        line: "Line 1",
+        ts: "2026-04-03T09:48:00",
+        site: "Press Hall",
+        line: "Press Line 1",
         operator: "AB",
-        asset: "Line 1 / Sealer",
-        transcriptShort: "Seal drift showed back up on lane three, thermocouple was checked and the next warm packs looked cleaner but not fully stable.",
-        transcriptFull: "Seal drift showed back up on lane three. I verified the thermocouple and the next warm packs looked cleaner, but the edge still wandered a little at higher speed. Leave this flagged for follow-up because the drift is repeating on the same section of the jaw.",
-        tags: { reason: "temperature drift", component: "sealer jaw", action: "verified thermocouple" },
+        asset: "Hot Press 1 / Upper Platen",
+        transcriptShort: "Platen temperature drift returned — same section of the upper platen, thermocouple connection checked but temperature still not fully stable.",
+        transcriptFull: "Platen temperature drift showed back up on the upper section of Hot Press 1. I verified the thermocouple connection and the temperature improved slightly, but the platen is still running 5°C below setpoint at higher press speeds. Leave this flagged for follow-up because the drift is repeating on the same platen zone.",
+        tags: { reason: "press temperature drift", component: "press platen", action: "raised platen setpoint" },
         enriched: true,
         confidence: "med",
         context: {
-          snapshots: snapshots(179, 5.3, 149),
+          snapshots: snapshots(145, 52, 16),
           alarms: [
-            { ts: "2026-04-03T09:28:00", code: "TEMP-17" },
-            { ts: "2026-04-03T09:31:00", code: "SEAL-22" },
-            { ts: "2026-04-03T09:33:00", code: "CLR-03" }
+            { ts: "2026-04-03T09:42:00", code: "TEMP-17" },
+            { ts: "2026-04-03T09:45:00", code: "TLOW-02" },
+            { ts: "2026-04-03T09:48:00", code: "CLR-03" }
           ]
         },
         flags: { needsFollowUp: true, missingAsset: false, untagged: false },
@@ -1635,22 +1636,22 @@
       },
       {
         id: "n06",
-        ts: "2026-04-03T10:18:00",
-        site: "South Hall",
-        line: "Line 2",
+        ts: "2026-04-03T10:33:00",
+        site: "Finishing Hall",
+        line: "Press Line 2",
         operator: "MK",
-        asset: "Line 2 / Infeed",
-        transcriptShort: "Short stop came from cartons skewing at the infeed guide, skew was cleared and the queue ran clean after guide pressure was reset.",
-        transcriptFull: "Short stop came from cartons skewing at the infeed guide. I cleared the skew and reset guide pressure before restarting. The queue ran clean after that, but the guide should be checked again at the next case change because the cartons were leaning in the same corner.",
-        tags: { reason: "jam", component: "infeed guide", action: "cleared skew" },
+        asset: "Tongue & Groove Line / Infeed Guide",
+        transcriptShort: "Board jam at T&G infeed — boards skewing on entry, jam cleared and guide pressure reset before line restarted cleanly.",
+        transcriptFull: "Board jam at the infeed of the Tongue and Groove Line. Boards were skewing on entry to the profiling heads. I cleared the jam and reset guide pressure before restarting. The line ran clean after that, but the infeed guide should be checked again at the next species changeover because the boards were leaning in the same corner each time.",
+        tags: { reason: "board jam", component: "infeed guide", action: "cleared board jam" },
         enriched: true,
         confidence: "high",
         context: {
-          snapshots: snapshots(171, 5.0, 139),
+          snapshots: snapshots(20, 0, 13),
           alarms: [
-            { ts: "2026-04-03T10:15:00", code: "JAM-11" },
-            { ts: "2026-04-03T10:17:00", code: "GUID-02" },
-            { ts: "2026-04-03T10:18:00", code: "CLR-01" }
+            { ts: "2026-04-03T10:29:00", code: "JAM-11" },
+            { ts: "2026-04-03T10:31:00", code: "GUID-02" },
+            { ts: "2026-04-03T10:33:00", code: "CLR-01" }
           ]
         },
         flags: { needsFollowUp: false, missingAsset: false, untagged: false },
@@ -1658,22 +1659,22 @@
       },
       {
         id: "n07",
-        ts: "2026-04-03T11:42:00",
-        site: "North Hall",
-        line: "Line 2",
+        ts: "2026-04-03T11:55:00",
+        site: "Press Hall",
+        line: "Press Line 2",
         operator: "SP",
-        asset: "Line 2 / Cartoner",
-        transcriptShort: "Glue flap was not folding clean, fold rail moved a few millimeters and the carton shape came back into line after a slow pass.",
-        transcriptFull: "Glue flap was not folding clean on the cartoner. I moved the fold rail a few millimeters and ran a slow pass until the carton shape came back into line. Leave a note for the next crew to confirm the rail has not walked back after lunch.",
-        tags: { reason: "alignment drift", component: "fold rail", action: "adjusted rail" },
+        asset: "Glue Spreader 1 / Glue Roller",
+        transcriptShort: "Glue spread uneven on one side — glue roller adjusted a few millimetres and spread came back into tolerance after a slow test pass.",
+        transcriptFull: "Glue spread was uneven on the operator-side of Glue Spreader 1. Boards leaving the spreader had a thin edge on the right side. I adjusted the glue roller position by approximately 2mm and ran a slow test pass until the spread came back into tolerance. Leave a note for the next crew to confirm the roller has not walked back after the next full speed run.",
+        tags: { reason: "glue spread variation", component: "glue roller", action: "adjusted glue roller" },
         enriched: true,
         confidence: "med",
         context: {
-          snapshots: snapshots(172, 5.1, 144),
+          snapshots: snapshots(22, 36, 11),
           alarms: [
-            { ts: "2026-04-03T11:37:00", code: "FOLD-07" },
-            { ts: "2026-04-03T11:40:00", code: "SHPE-09" },
-            { ts: "2026-04-03T11:42:00", code: "CLR-02" }
+            { ts: "2026-04-03T11:49:00", code: "GLUE-07" },
+            { ts: "2026-04-03T11:52:00", code: "SPRD-09" },
+            { ts: "2026-04-03T11:55:00", code: "CLR-02" }
           ]
         },
         flags: { needsFollowUp: false, missingAsset: false, untagged: false },
@@ -1681,22 +1682,22 @@
       },
       {
         id: "n08",
-        ts: "2026-04-03T12:08:00",
-        site: "North Hall",
-        line: "Line 1",
+        ts: "2026-04-03T12:20:00",
+        site: "Press Hall",
+        line: "Press Line 1",
         operator: "AB",
-        asset: "Line 1 / Sealer",
-        transcriptShort: "Seal edge stayed clean after the temperature change, but the same alarm flashed once when speed was lifted back to target.",
-        transcriptFull: "Seal edge stayed clean after the temperature change, but the same alarm flashed once when speed was lifted back to target. I kept the line running because the next packs were acceptable, yet the repeat alarm should stay on the watchlist for the afternoon crew.",
-        tags: { reason: "temperature drift", component: "sealer jaw", action: "monitored restart" },
+        asset: "Hot Press 1 / Upper Platen",
+        transcriptShort: "Platen surface looks stable after the thermocouple re-seat, but the same low-temperature alarm flashed once when press speed was lifted back to target.",
+        transcriptFull: "Platen surface looks stable after the thermocouple connector was re-seated, but the same low-temperature alarm flashed once when we lifted press speed back to target rate. I kept the press running because the boards coming out look acceptable, but the repeat alarm should stay on the watchlist for the afternoon crew.",
+        tags: { reason: "press temperature drift", component: "press platen", action: "raised platen setpoint" },
         enriched: true,
         confidence: "high",
         context: {
-          snapshots: snapshots(180, 5.4, 154),
+          snapshots: snapshots(155, 53, 19),
           alarms: [
-            { ts: "2026-04-03T12:04:00", code: "TEMP-17" },
-            { ts: "2026-04-03T12:07:00", code: "WARN-05" },
-            { ts: "2026-04-03T12:08:00", code: "CLR-01" }
+            { ts: "2026-04-03T12:16:00", code: "TEMP-17" },
+            { ts: "2026-04-03T12:18:00", code: "WARN-05" },
+            { ts: "2026-04-03T12:20:00", code: "CLR-01" }
           ]
         },
         flags: { needsFollowUp: false, missingAsset: false, untagged: false },
@@ -1704,22 +1705,22 @@
       },
       {
         id: "n09",
-        ts: "2026-04-03T12:47:00",
-        site: "North Hall",
-        line: "Line 2",
+        ts: "2026-04-03T13:01:00",
+        site: "Finishing Hall",
+        line: "Press Line 2",
         operator: "MK",
-        asset: "Line 2 / Cartoner",
-        transcriptShort: "Photoeye flickered during label change and a second wipe cleared the false reject right away.",
-        transcriptFull: "Photoeye flickered during the label change and gave a false reject. A second wipe cleared it right away, but the eye is collecting dust faster than normal today. Keep sensor cleaning in the loop until the enclosure gets checked.",
-        tags: { reason: "sensor fouling", component: "cartoner photoeye", action: "cleaned sensor" },
+        asset: "Sorting & Grading Station / Thickness Gauge",
+        transcriptShort: "Thickness gauge sensor fouled again during oak-to-walnut species changeover — second wipe cleared the false reject immediately.",
+        transcriptFull: "Thickness gauge sensor fouled again during the oak-to-walnut species changeover and started giving false rejects. A second wipe cleared it right away, but the sensor is collecting dust faster than normal today. Keep sensor cleaning in the loop until the enclosure gets checked or the Wide Belt Sander belt load is reduced.",
+        tags: { reason: "sensor fouling", component: "thickness gauge", action: "cleaned sensor" },
         enriched: true,
         confidence: "med",
         context: {
-          snapshots: snapshots(173, 5.0, 149),
+          snapshots: snapshots(21, 0, 13),
           alarms: [
-            { ts: "2026-04-03T12:43:00", code: "PEYE-12" },
-            { ts: "2026-04-03T12:45:00", code: "REJ-04" },
-            { ts: "2026-04-03T12:47:00", code: "CLR-02" }
+            { ts: "2026-04-03T12:57:00", code: "SENS-12" },
+            { ts: "2026-04-03T12:59:00", code: "REJ-04" },
+            { ts: "2026-04-03T13:01:00", code: "CLR-02" }
           ]
         },
         flags: { needsFollowUp: false, missingAsset: false, untagged: false },
@@ -1727,22 +1728,22 @@
       },
       {
         id: "n10",
-        ts: "2026-04-03T13:35:00",
-        site: "South Hall",
-        line: "Line 1",
+        ts: "2026-04-03T13:48:00",
+        site: "Finishing Hall",
+        line: "Press Line 1",
         operator: "JR",
-        asset: "Line 1 / Wrapper",
-        transcriptShort: "Wrapper slowed when a splice bump came through, splice tail was trimmed and the film settled on the next cycle.",
-        transcriptFull: "Wrapper slowed when a splice bump came through and the film tail lifted. I trimmed the splice tail and the film settled on the next cycle. Mention it to maintenance if the next roll shows the same bump because the roller looked sharp on one edge.",
-        tags: { reason: "film tracking", component: "splice roller", action: "trimmed splice" },
+        asset: "UV Coating Line / Doctor Blade",
+        transcriptShort: "Coating drip appearing on board edges — doctor blade adjusted and pooling cleared on the next slow run before speed was restored.",
+        transcriptFull: "Coating drip appearing on board edges coming off the UV Coating Line. Excess coating pooling on the left edge of boards. I adjusted the doctor blade position and ran a slow pass until the drip cleared. Output stayed stable after the fix, but the blade mounting should be checked next maintenance window because this is the third edge drip this week.",
+        tags: { reason: "coating drip", component: "doctor blade", action: "adjusted doctor blade" },
         enriched: true,
         confidence: "high",
         context: {
-          snapshots: snapshots(175, 5.1, 147),
+          snapshots: snapshots(21, 0, 15),
           alarms: [
-            { ts: "2026-04-03T13:30:00", code: "SPLC-05" },
-            { ts: "2026-04-03T13:33:00", code: "FTRK-04" },
-            { ts: "2026-04-03T13:35:00", code: "CLR-01" }
+            { ts: "2026-04-03T13:44:00", code: "COAT-05" },
+            { ts: "2026-04-03T13:46:00", code: "BLDE-04" },
+            { ts: "2026-04-03T13:48:00", code: "CLR-01" }
           ]
         },
         flags: { needsFollowUp: false, missingAsset: false, untagged: false },
@@ -1750,22 +1751,22 @@
       },
       {
         id: "n11",
-        ts: "2026-04-03T14:31:00",
-        site: "North Hall",
-        line: "Line 1",
+        ts: "2026-04-03T14:38:00",
+        site: "Finishing Hall",
+        line: "Press Line 1",
         operator: "LC",
-        asset: "Line 1 / Sealer",
-        transcriptShort: "After handover the sealer dipped again on the first five packs, heat zone was nudged and jaw pressure checked before speed recovered.",
-        transcriptFull: "After handover the sealer dipped again on the first five packs. I nudged the heat zone and checked jaw pressure before speed recovered, but this is the same drift we saw earlier in the shift. Keep it open until the next sample confirms the fix is holding.",
-        tags: { reason: "temperature drift", component: "sealer jaw", action: "raised setpoint" },
+        asset: "Wide Belt Sander / Sanding Belt",
+        transcriptShort: "After handover the sanding belt showed wear marks increasing — thickness deviation creeping up on boards and surface finish deteriorating.",
+        transcriptFull: "After handover the sanding belt on the Wide Belt Sander is showing increasing wear marks. Thickness deviation on boards is creeping up and the surface finish is starting to deteriorate. This is the same belt drift we flagged earlier. Keep it open until the next sample confirms whether the belt can run to the next planned stop or needs immediate replacement.",
+        tags: { reason: "sanding belt wear", component: "sanding belt", action: "raised work order" },
         enriched: true,
         confidence: "med",
         context: {
-          snapshots: snapshots(177, 5.3, 143),
+          snapshots: snapshots(22, 0, 16),
           alarms: [
-            { ts: "2026-04-03T14:28:00", code: "TEMP-17" },
-            { ts: "2026-04-03T14:30:00", code: "SEAL-22" },
-            { ts: "2026-04-03T14:31:00", code: "CLR-02" }
+            { ts: "2026-04-03T14:34:00", code: "THCK-17" },
+            { ts: "2026-04-03T14:36:00", code: "SURF-22" },
+            { ts: "2026-04-03T14:38:00", code: "CLR-02" }
           ]
         },
         flags: { needsFollowUp: true, missingAsset: false, untagged: false },
@@ -1773,22 +1774,22 @@
       },
       {
         id: "n12",
-        ts: "2026-04-03T14:48:00",
-        site: "North Hall",
-        line: "Line 2",
+        ts: "2026-04-03T14:55:00",
+        site: "Finishing Hall",
+        line: "Press Line 2",
         operator: "AB",
-        asset: "Line 2 / Cartoner",
-        transcriptShort: "Cartoner photoeye needed a second wipe and the false reject cleared once dust was pulled off the face.",
-        transcriptFull: "Cartoner photoeye needed a second wipe and the false reject cleared once dust was pulled off the face. This is the second photoeye note today, so leave sensor cleaning on the watchlist until the enclosure gets checked during the next break.",
-        tags: { reason: "sensor fouling", component: "cartoner photoeye", action: "cleaned sensor" },
+        asset: "Sorting & Grading Station / Thickness Gauge",
+        transcriptShort: "Thickness gauge needed a second wipe and the false reject cleared once dust was cleaned off the sensor face.",
+        transcriptFull: "Thickness gauge needed a second wipe and the false reject cleared once dust was cleaned off the sensor face. This is the third sensor note today, so leave sensor cleaning on the watchlist until the dust enclosure gets checked during the next maintenance break.",
+        tags: { reason: "sensor fouling", component: "thickness gauge", action: "cleaned sensor" },
         enriched: true,
         confidence: "high",
         context: {
-          snapshots: snapshots(173, 5.0, 151),
+          snapshots: snapshots(21, 0, 14),
           alarms: [
-            { ts: "2026-04-03T14:44:00", code: "PEYE-12" },
-            { ts: "2026-04-03T14:46:00", code: "REJ-04" },
-            { ts: "2026-04-03T14:48:00", code: "CLR-01" }
+            { ts: "2026-04-03T14:51:00", code: "SENS-12" },
+            { ts: "2026-04-03T14:53:00", code: "REJ-04" },
+            { ts: "2026-04-03T14:55:00", code: "CLR-01" }
           ]
         },
         flags: { needsFollowUp: false, missingAsset: false, untagged: false },
@@ -1796,22 +1797,22 @@
       },
       {
         id: "n13",
-        ts: "2026-04-03T15:02:00",
-        site: "North Hall",
-        line: "Line 1",
+        ts: "2026-04-03T15:08:00",
+        site: "Press Hall",
+        line: "Press Line 2",
         operator: "MK",
-        asset: "Line 1 / Film Feed",
-        transcriptShort: "Film tension settled after the guide tweak, but there is still a sharp snap sound when the roll change finishes.",
-        transcriptFull: "Film tension settled after the guide tweak, but there is still a sharp snap sound when the roll change finishes. Output stayed stable after I tightened the guide, though the next roll change should be watched in case the dancer is over-correcting.",
-        tags: { reason: "film tracking", component: "film dancer", action: "tightened guide" },
+        asset: "Glue Spreader 1 / Glue Roller",
+        transcriptShort: "Glue spread stabilised after the roller tweak, but there is still an intermittent snap sound when the feed roller engages at full speed.",
+        transcriptFull: "Glue spread stabilised after the roller tweak, but there is still an intermittent snap sound when the feed roller engages at full speed. Output stayed stable after I tightened the roller guide, though the next full-speed run should be watched in case the roller is over-correcting at high feed rate.",
+        tags: { reason: "glue spread variation", component: "glue roller", action: "adjusted glue roller" },
         enriched: true,
         confidence: "med",
         context: {
-          snapshots: snapshots(176, 5.1, 150),
+          snapshots: snapshots(22, 36, 12),
           alarms: [
-            { ts: "2026-04-03T14:58:00", code: "FTRK-04" },
-            { ts: "2026-04-03T15:00:00", code: "ROLL-09" },
-            { ts: "2026-04-03T15:02:00", code: "CLR-03" }
+            { ts: "2026-04-03T15:04:00", code: "GLUE-07" },
+            { ts: "2026-04-03T15:06:00", code: "FEED-09" },
+            { ts: "2026-04-03T15:08:00", code: "CLR-03" }
           ]
         },
         flags: { needsFollowUp: false, missingAsset: false, untagged: false },
@@ -1819,22 +1820,22 @@
       },
       {
         id: "n14",
-        ts: "2026-04-03T15:11:00",
-        site: "South Hall",
-        line: "Line 2",
+        ts: "2026-04-03T15:18:00",
+        site: "Finishing Hall",
+        line: "Press Line 2",
         operator: "SP",
         asset: null,
-        transcriptShort: "Could not confirm the station from the voice note, but there was a brief stop with cartons bunching at transfer before flow returned.",
-        transcriptFull: "Could not confirm the station from the voice note, but there was a brief stop with cartons bunching at transfer before flow returned. I requested a station check because the note came through low and clipped. Please tag the asset if this happens again so the follow-up lands faster.",
-        tags: { reason: "jam", component: null, action: "requested station check" },
+        transcriptShort: "Could not confirm the machine from the voice note, but there was a brief stop with boards bunching at the packaging transfer before flow returned.",
+        transcriptFull: "Could not confirm the machine from the voice note, but there was a brief stop with boards bunching at the packaging transfer point before flow returned. I requested a station check because the note came through low quality and clipped. Please tag the asset if this happens again so the follow-up lands faster.",
+        tags: { reason: "board jam", component: null, action: "cleared board jam" },
         enriched: false,
         confidence: "low",
         context: {
-          snapshots: snapshots(170, 4.8, 136),
+          snapshots: snapshots(20, 0, 11),
           alarms: [
-            { ts: "2026-04-03T15:08:00", code: "STOP-14" },
-            { ts: "2026-04-03T15:10:00", code: "JAM-11" },
-            { ts: "2026-04-03T15:11:00", code: "CLR-02" }
+            { ts: "2026-04-03T15:14:00", code: "STOP-14" },
+            { ts: "2026-04-03T15:16:00", code: "JAM-11" },
+            { ts: "2026-04-03T15:18:00", code: "CLR-02" }
           ]
         },
         flags: { needsFollowUp: true, missingAsset: true, untagged: false },
@@ -1842,22 +1843,22 @@
       },
       {
         id: "n15",
-        ts: "2026-04-03T15:24:00",
-        site: "North Hall",
-        line: "Line 1",
+        ts: "2026-04-03T15:30:00",
+        site: "Finishing Hall",
+        line: "Press Line 1",
         operator: "AB",
-        asset: "Line 1 / Sealer",
-        transcriptShort: "Seal line looks stable now, a sample from the last warm pack is held and QC will compare it if the drift returns.",
-        transcriptFull: "Seal line looks stable now. I held a sample from the last warm pack and asked QC to compare it if the drift returns later in the shift. No fresh alarm on the last run, but keep the earlier repeat drift in mind when the next speed change comes through.",
-        tags: { reason: "temperature drift", component: "sealer jaw", action: "collected sample" },
+        asset: "UV Coating Line / Doctor Blade",
+        transcriptShort: "Coating line looks stable now — a sample board from the last run is held and QC will check edge thickness if the drip returns.",
+        transcriptFull: "Coating line looks stable now. I held a sample board from the last run and asked QC to check the edge coating thickness if the drip returns later in the shift. No fresh alarm on the last run, but keep the earlier blade drift in mind when the next speed change comes through.",
+        tags: { reason: "coating drip", component: "doctor blade", action: "isolated batch for QC inspection" },
         enriched: true,
         confidence: "high",
         context: {
-          snapshots: snapshots(179, 5.3, 154),
+          snapshots: snapshots(21, 0, 15),
           alarms: [
-            { ts: "2026-04-03T15:18:00", code: "TEMP-17" },
-            { ts: "2026-04-03T15:21:00", code: "WARN-05" },
-            { ts: "2026-04-03T15:24:00", code: "CLR-01" }
+            { ts: "2026-04-03T15:24:00", code: "COAT-05" },
+            { ts: "2026-04-03T15:27:00", code: "WARN-05" },
+            { ts: "2026-04-03T15:30:00", code: "CLR-01" }
           ]
         },
         flags: { needsFollowUp: false, missingAsset: false, untagged: false },
@@ -1866,28 +1867,28 @@
     ];
 
     const contextStates = [
-      { site: "North Hall", line: "Line 1", start: "2026-04-03T07:00:00", end: "2026-04-03T07:40:00", state: "run" },
-      { site: "North Hall", line: "Line 1", start: "2026-04-03T07:40:00", end: "2026-04-03T08:10:00", state: "slow" },
-      { site: "North Hall", line: "Line 1", start: "2026-04-03T08:10:00", end: "2026-04-03T08:22:00", state: "fault" },
-      { site: "North Hall", line: "Line 1", start: "2026-04-03T08:22:00", end: "2026-04-03T09:50:00", state: "run" },
-      { site: "North Hall", line: "Line 1", start: "2026-04-03T09:50:00", end: "2026-04-03T10:08:00", state: "slow" },
-      { site: "North Hall", line: "Line 1", start: "2026-04-03T10:08:00", end: "2026-04-03T14:20:00", state: "run" },
-      { site: "North Hall", line: "Line 1", start: "2026-04-03T14:20:00", end: "2026-04-03T15:08:00", state: "slow" },
-      { site: "North Hall", line: "Line 1", start: "2026-04-03T15:08:00", end: "2026-04-03T15:30:00", state: "run" },
-      { site: "North Hall", line: "Line 2", start: "2026-04-03T11:20:00", end: "2026-04-03T11:48:00", state: "slow" },
-      { site: "North Hall", line: "Line 2", start: "2026-04-03T11:48:00", end: "2026-04-03T12:38:00", state: "run" },
-      { site: "North Hall", line: "Line 2", start: "2026-04-03T12:38:00", end: "2026-04-03T12:52:00", state: "slow" },
-      { site: "North Hall", line: "Line 2", start: "2026-04-03T12:52:00", end: "2026-04-03T14:40:00", state: "run" },
-      { site: "North Hall", line: "Line 2", start: "2026-04-03T14:40:00", end: "2026-04-03T14:54:00", state: "slow" },
-      { site: "North Hall", line: "Line 2", start: "2026-04-03T14:54:00", end: "2026-04-03T15:30:00", state: "run" },
-      { site: "South Hall", line: "Line 1", start: "2026-04-03T13:24:00", end: "2026-04-03T13:39:00", state: "slow" },
-      { site: "South Hall", line: "Line 1", start: "2026-04-03T13:39:00", end: "2026-04-03T15:30:00", state: "run" },
-      { site: "South Hall", line: "Line 2", start: "2026-04-03T08:42:00", end: "2026-04-03T08:56:00", state: "slow" },
-      { site: "South Hall", line: "Line 2", start: "2026-04-03T08:56:00", end: "2026-04-03T10:14:00", state: "run" },
-      { site: "South Hall", line: "Line 2", start: "2026-04-03T10:14:00", end: "2026-04-03T10:21:00", state: "stop" },
-      { site: "South Hall", line: "Line 2", start: "2026-04-03T10:21:00", end: "2026-04-03T15:06:00", state: "run" },
-      { site: "South Hall", line: "Line 2", start: "2026-04-03T15:06:00", end: "2026-04-03T15:14:00", state: "fault" },
-      { site: "South Hall", line: "Line 2", start: "2026-04-03T15:14:00", end: "2026-04-03T15:30:00", state: "run" }
+      { site: "Press Hall", line: "Press Line 1", start: "2026-04-03T07:00:00", end: "2026-04-03T07:40:00", state: "run" },
+      { site: "Press Hall", line: "Press Line 1", start: "2026-04-03T07:40:00", end: "2026-04-03T08:10:00", state: "slow" },
+      { site: "Press Hall", line: "Press Line 1", start: "2026-04-03T08:10:00", end: "2026-04-03T08:22:00", state: "fault" },
+      { site: "Press Hall", line: "Press Line 1", start: "2026-04-03T08:22:00", end: "2026-04-03T09:50:00", state: "run" },
+      { site: "Press Hall", line: "Press Line 1", start: "2026-04-03T09:50:00", end: "2026-04-03T10:08:00", state: "slow" },
+      { site: "Press Hall", line: "Press Line 1", start: "2026-04-03T10:08:00", end: "2026-04-03T14:20:00", state: "run" },
+      { site: "Press Hall", line: "Press Line 1", start: "2026-04-03T14:20:00", end: "2026-04-03T15:08:00", state: "slow" },
+      { site: "Press Hall", line: "Press Line 1", start: "2026-04-03T15:08:00", end: "2026-04-03T15:30:00", state: "run" },
+      { site: "Press Hall", line: "Press Line 2", start: "2026-04-03T11:20:00", end: "2026-04-03T11:48:00", state: "slow" },
+      { site: "Press Hall", line: "Press Line 2", start: "2026-04-03T11:48:00", end: "2026-04-03T12:38:00", state: "run" },
+      { site: "Press Hall", line: "Press Line 2", start: "2026-04-03T12:38:00", end: "2026-04-03T12:52:00", state: "slow" },
+      { site: "Press Hall", line: "Press Line 2", start: "2026-04-03T12:52:00", end: "2026-04-03T14:40:00", state: "run" },
+      { site: "Press Hall", line: "Press Line 2", start: "2026-04-03T14:40:00", end: "2026-04-03T14:54:00", state: "slow" },
+      { site: "Press Hall", line: "Press Line 2", start: "2026-04-03T14:54:00", end: "2026-04-03T15:30:00", state: "run" },
+      { site: "Finishing Hall", line: "Press Line 1", start: "2026-04-03T13:24:00", end: "2026-04-03T13:39:00", state: "slow" },
+      { site: "Finishing Hall", line: "Press Line 1", start: "2026-04-03T13:39:00", end: "2026-04-03T15:30:00", state: "run" },
+      { site: "Finishing Hall", line: "Press Line 2", start: "2026-04-03T08:42:00", end: "2026-04-03T08:56:00", state: "slow" },
+      { site: "Finishing Hall", line: "Press Line 2", start: "2026-04-03T08:56:00", end: "2026-04-03T10:14:00", state: "run" },
+      { site: "Finishing Hall", line: "Press Line 2", start: "2026-04-03T10:14:00", end: "2026-04-03T10:21:00", state: "stop" },
+      { site: "Finishing Hall", line: "Press Line 2", start: "2026-04-03T10:21:00", end: "2026-04-03T15:06:00", state: "run" },
+      { site: "Finishing Hall", line: "Press Line 2", start: "2026-04-03T15:06:00", end: "2026-04-03T15:14:00", state: "fault" },
+      { site: "Finishing Hall", line: "Press Line 2", start: "2026-04-03T15:14:00", end: "2026-04-03T15:30:00", state: "run" }
     ];
 
     const shiftSummaries = {
@@ -1909,9 +1910,9 @@
     };
 
     const tagOptions = {
-      reason: ["temperature drift", "film tracking", "sensor fouling", "jam", "alignment drift"],
-      component: ["sealer jaw", "film dancer", "cartoner photoeye", "infeed guide", "fold rail"],
-      action: ["raised setpoint", "cleaned sensor", "tightened guide", "verified thermocouple", "collected sample", "requested station check", "adjusted rail"]
+      reason: ["press temperature drift", "board jam", "sensor fouling", "glue spread variation", "coating drip", "sanding belt wear", "alignment drift"],
+      component: ["press platen", "feed roller", "thickness gauge", "glue roller", "doctor blade", "sanding belt", "infeed guide"],
+      action: ["raised platen setpoint", "cleaned sensor", "adjusted glue roller", "re-centered alignment guide", "adjusted doctor blade", "replaced sanding belt", "cleared board jam", "isolated batch for QC inspection"]
     };
 
     const summaryFallback = "No operator notes are currently inside the active window, so there is no live note pattern to summarize. Treat this as a quiet slice rather than a verified clean run: confirm the filters, confirm the time range, and keep watch for the next note arrival. If activity resumes, use the stream to check whether new notes cluster around a single asset, repeat a known tag theme, or point to a fresh follow-up that needs ownership before handover. Until then, the best risk line is simple discipline around tagging, asset labeling, and closing any outstanding follow-up before the next cluster of notes starts to build.";
@@ -1972,7 +1973,7 @@
     const anchorNow = capturedNotes.length ? new Date() : new Date("2026-04-03T15:24:12");
     const state = {
       theme: "light",
-      site: capturedNotes.length ? "All Sites" : "North Hall",
+      site: capturedNotes.length ? "All Sites" : "Press Hall",
       line: "All Lines",
       operator: "All Operators",
       shift: "All",
@@ -2227,9 +2228,9 @@
     }
 
     function summaryContext(notes) {
-      const reasons = pickTop(notes.map((note) => note.tags.reason), ["temperature drift", "sensor fouling", "film tracking"]);
-      const components = pickTop(notes.map((note) => note.tags.component), ["sealer jaw", "cartoner photoeye", "film dancer"]);
-      const actions = pickTop(notes.map((note) => note.tags.action), ["raised setpoint", "cleaned sensor"]);
+      const reasons = pickTop(notes.map((note) => note.tags.reason), ["press temperature drift", "sensor fouling", "board jam"]);
+      const components = pickTop(notes.map((note) => note.tags.component), ["press platen", "thickness gauge", "glue roller"]);
+      const actions = pickTop(notes.map((note) => note.tags.action), ["raised platen setpoint", "cleaned sensor"]);
       const repeated = getRepeatedIssue(notes);
       const followUps = notes.filter((note) => note.flags.needsFollowUp);
       const lowConfidenceCount = notes.filter((note) => note.confidence === "low").length;
@@ -3027,8 +3028,57 @@
       render();
     });
 
+    // ── Shift Event Log: renders captured notes from localStorage into side card ─
+    function renderEventLog() {
+      const card = document.getElementById("shiftEventLogCard");
+      if (!card) return;
+
+      let notes = [];
+      try {
+        const raw = localStorage.getItem("shiftvoice_notes");
+        notes = raw ? JSON.parse(raw) : [];
+      } catch { notes = []; }
+
+      const sorted = [...notes].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+      const headHtml = `
+        <div class="side-head">
+          <div class="eyebrow">Shift Event Log</div>
+          <h2 style="font-size:1.05rem;margin-bottom:0.3rem;">Captured This Session</h2>
+          <p>${sorted.length === 0 ? "No notes captured yet — use the capture app to log events." : sorted.length + " event" + (sorted.length !== 1 ? "s" : "") + " logged this session"}</p>
+        </div>`;
+
+      if (sorted.length === 0) {
+        card.innerHTML = headHtml;
+        return;
+      }
+
+      const itemsHtml = sorted.map(note => {
+        const time = new Date(note.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+        const machine = escapeHtml(note.structured?.machine || "Unknown machine");
+        const reason = note.structured?.reason || "";
+        const action = note.structured?.actionTaken || "";
+        const detail = reason + (reason && action ? " — " : "") + action;
+        const dotColor = note.isComplete ? "var(--good)" : "var(--warn)";
+        return `<div style="display:flex;align-items:flex-start;gap:9px;padding:9px 11px;border-radius:14px;background:color-mix(in srgb,var(--panelAlt) 82%,transparent 18%);border:1px solid var(--border);">
+          <span style="width:8px;height:8px;border-radius:50%;background:${dotColor};flex-shrink:0;margin-top:5px;box-shadow:0 0 0 4px color-mix(in srgb,${dotColor} 16%,transparent 84%);"></span>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
+              <span style="font-size:0.82rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);">${machine}</span>
+              <span style="font-size:0.72rem;color:var(--muted);flex-shrink:0;">${time}</span>
+            </div>
+            ${detail ? `<p style="margin:2px 0 0;font-size:0.72rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(detail)}</p>` : ""}
+          </div>
+        </div>`;
+      }).join("");
+
+      card.innerHTML = headHtml + `<div style="display:grid;gap:7px;max-height:320px;overflow-y:auto;padding-right:2px;scrollbar-width:thin;">${itemsHtml}</div>`;
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     initTheme();
     render();
+    renderEventLog();
 
     // ── Live polling: detect new captured notes every 4 seconds ──────────────
     let _lastNoteCount = loadCapturedNotes().length;
@@ -3046,6 +3096,7 @@
           state.timeRange = "Today";
         }
         render();
+        renderEventLog();
       }
     }, 4000);
     // ─────────────────────────────────────────────────────────────────────────

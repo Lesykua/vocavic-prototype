@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShiftVoice — Parquet Factory Demo</title>
+  <title>Vocavic — Parquet Factory Demo</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -375,7 +375,7 @@
 
 <!-- SUMMARY BAR -->
 <div class="summary-bar">
-  <div class="brand">SHIFT<span>VOICE</span></div>
+  <div class="brand">VOCA<span>VIC</span></div>
   <div class="vdiv"></div>
   <span class="bar-label">Shift</span>
   <span class="bar-value">Morning · Press Hall · 06:00–14:00</span>
@@ -749,7 +749,7 @@ function closeDetail() {
 // Merge captured notes from localStorage into the event log
 (function mergeEventLog() {
   try {
-    const raw = localStorage.getItem('shiftvoice_notes');
+    const raw = localStorage.getItem('vocavic_notes');
     if (!raw) return;
     const notes = JSON.parse(raw);
     if (!notes.length) return;

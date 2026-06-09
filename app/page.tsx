@@ -44,7 +44,7 @@ export default function Home() {
               Your plant runs on memory that disappears every 8 hours.
             </h1>
             <p className="mt-6 text-[#687d85] text-lg leading-relaxed max-w-lg">
-              ShiftVoice gives it structured operational memory — built into the shift, not bolted on after. Voice capture, automatic event structure, and replay for handover, RCA, and Tier meetings.
+              Vocavic gives it structured operational memory — built into the shift, not bolted on after. Voice capture, automatic event structure, and replay for handover, RCA, and Tier meetings.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <a
@@ -97,7 +97,7 @@ export default function Home() {
             {[
               {
                 title: "Voice → Structure",
-                body: "Operators speak. ShiftVoice structures. No forms, no typing, no new habit to build.",
+                body: "Operators speak. Vocavic structures. No forms, no typing, no new habit to build.",
                 icon: "🎙",
               },
               {
@@ -224,7 +224,7 @@ export default function Home() {
               className="font-extrabold text-[#12232c] leading-none"
               style={{ fontFamily: 'var(--font-barlow-condensed)', fontSize: 'clamp(2rem, 3.5vw, 3.5rem)' }}
             >
-              See what the shift looks like inside ShiftVoice
+              See what the shift looks like inside Vocavic
             </h2>
             <a
               href="https://tidycal.com/lesykua/shift-voice-meeting"
@@ -254,7 +254,7 @@ export default function Home() {
             </div>
             <iframe
               src="/dashboard.html"
-              title="ShiftVoice — live operator notes demo"
+              title="Vocavic — live operator notes demo"
               className="w-full border-0"
               style={{ height: "clamp(520px, 60vw, 720px)" }}
               loading="lazy"
@@ -410,7 +410,7 @@ export default function Home() {
               {
                 step: "2",
                 label: "Structure",
-                body: "ShiftVoice extracts event type, affected component, root reason, and action taken automatically.",
+                body: "Vocavic extracts event type, affected component, root reason, and action taken automatically.",
               },
               {
                 step: "3",
@@ -547,7 +547,7 @@ export default function Home() {
             {/* Left: narrative */}
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-[rgba(255,251,245,0.35)] mb-6">
-                About ShiftVoice
+                About Vocavic
               </p>
               <h2
                 className="font-extrabold text-white leading-none mb-8"
@@ -556,10 +556,10 @@ export default function Home() {
                 Built by people who&apos;ve worked inside plants.
               </h2>
               <p className="text-[rgba(255,251,245,0.55)] text-base leading-relaxed mb-5">
-                ShiftVoice is built by a team with hands-on experience in industrial operations and applied AI. We&apos;ve worked inside plants. We know what actually happens at shift end.
+                Vocavic is built by a team with hands-on experience in industrial operations and applied AI. We&apos;ve worked inside plants. We know what actually happens at shift end.
               </p>
               <p className="text-[rgba(255,251,245,0.35)] text-sm leading-relaxed">
-                We started ShiftVoice because we saw the same pattern everywhere: smart operators, experienced engineers, and dedicated managers — all limited by the fact that operational knowledge evaporates every time a shift ends.
+                We started Vocavic because we saw the same pattern everywhere: smart operators, experienced engineers, and dedicated managers — all limited by the fact that operational knowledge evaporates every time a shift ends.
               </p>
             </div>
 

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
-  <title>ShiftVoice — Parquet Operations</title>
+  <title>Vocavic — Parquet Operations</title>
   <style>
     :root {
       --bg: #f4efe6;
@@ -1419,7 +1419,7 @@
     <header class="panel topbar">
       <div class="topbar-left">
         <div class="brand">
-          <div class="brand-wordmark">ShiftVoice</div>
+          <div class="brand-wordmark">Vocavic</div>
           <div class="brand-subtle">Parquet Operations</div>
         </div>
         <div class="control-group">
@@ -1959,7 +1959,7 @@
     }
     function loadCapturedNotes() {
       try {
-        const raw = localStorage.getItem("shiftvoice_notes");
+        const raw = localStorage.getItem("vocavic_notes");
         return raw ? JSON.parse(raw).map(mapCapturedNote) : [];
       } catch { return []; }
     }
@@ -2946,8 +2946,8 @@
         if (idx !== -1) noteState.splice(idx, 1);
         // Remove from localStorage
         try {
-          const stored = JSON.parse(localStorage.getItem("shiftvoice_notes") || "[]");
-          localStorage.setItem("shiftvoice_notes", JSON.stringify(stored.filter(n => n.id !== id)));
+          const stored = JSON.parse(localStorage.getItem("vocavic_notes") || "[]");
+          localStorage.setItem("vocavic_notes", JSON.stringify(stored.filter(n => n.id !== id)));
         } catch {}
         state.drawerOpen = false;
         state.selectedId = null;
@@ -2963,7 +2963,7 @@
         }
         if (label) label.textContent = "Reset demo";
         // Clear everything — captured notes deleted, feed goes empty
-        try { localStorage.removeItem("shiftvoice_notes"); } catch {}
+        try { localStorage.removeItem("vocavic_notes"); } catch {}
         noteState.length = 0;
         _lastNoteCount = 0;   // prevent next poll from re-adding stale notes
         state.drawerOpen = false;
@@ -3035,7 +3035,7 @@
 
       let notes = [];
       try {
-        const raw = localStorage.getItem("shiftvoice_notes");
+        const raw = localStorage.getItem("vocavic_notes");
         notes = raw ? JSON.parse(raw) : [];
       } catch { notes = []; }
 

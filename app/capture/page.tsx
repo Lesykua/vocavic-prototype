@@ -68,18 +68,18 @@ const SHIFT_WINDOW_MS = 8 * 60 * 60 * 1000
 
 function getDeviceId(): string {
   if (typeof window === 'undefined') return 'unknown'
-  let id = localStorage.getItem('shiftvoice_device_id')
+  let id = localStorage.getItem('vocavic_device_id')
   if (!id) {
     id = `device_${crypto.randomUUID().slice(0, 8)}`
-    localStorage.setItem('shiftvoice_device_id', id)
+    localStorage.setItem('vocavic_device_id', id)
   }
   return id
 }
 
 function saveNoteLocally(note: ShiftNote) {
-  const existing = JSON.parse(localStorage.getItem('shiftvoice_notes') ?? '[]') as ShiftNote[]
+  const existing = JSON.parse(localStorage.getItem('vocavic_notes') ?? '[]') as ShiftNote[]
   existing.unshift(note)
-  localStorage.setItem('shiftvoice_notes', JSON.stringify(existing))
+  localStorage.setItem('vocavic_notes', JSON.stringify(existing))
 }
 
 /** Returns the most recent same-shift note that shares machine or reason. */
@@ -114,12 +114,12 @@ export default function CapturePage() {
   useEffect(() => {
     const id = getDeviceId()
     setDeviceId(id)
-    const stored = JSON.parse(localStorage.getItem('shiftvoice_notes') ?? '[]') as ShiftNote[]
+    const stored = JSON.parse(localStorage.getItem('vocavic_notes') ?? '[]') as ShiftNote[]
     // Re-seed whenever only seed notes are present (keeps timestamps fresh across sessions)
     const onlySeedNotes = stored.length === 0 || stored.every(n => n.id.startsWith('seed-'))
     if (onlySeedNotes) {
       const seeds = buildSeedNotes(id)
-      localStorage.setItem('shiftvoice_notes', JSON.stringify(seeds))
+      localStorage.setItem('vocavic_notes', JSON.stringify(seeds))
       setSavedNotes(seeds)
     } else {
       setSavedNotes(stored)
@@ -158,7 +158,7 @@ export default function CapturePage() {
         style={{ background: '#fff' }}
       >
         <a href="/" className="font-semibold text-lg tracking-tight" style={{ color: '#0f5f68' }}>
-          ShiftVoice
+          Vocavic
         </a>
         <div className="flex items-center gap-3">
           <a

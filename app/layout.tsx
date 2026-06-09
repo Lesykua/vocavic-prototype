@@ -16,9 +16,9 @@ const barlowCondensed = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
-  title: "ShiftVoice — Structured Operational Memory for Manufacturing",
+  title: "Vocavic — Structured Operational Memory for Manufacturing",
   description:
-    "ShiftVoice gives your plant structured operational memory — built into the shift, not bolted on after. Voice capture, automatic event structure, and replay for handover, RCA, and Tier meetings.",
+    "Vocavic gives your plant structured operational memory — built into the shift, not bolted on after. Voice capture, automatic event structure, and replay for handover, RCA, and Tier meetings.",
 };
 
 export default function RootLayout({

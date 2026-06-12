@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const HF_MODEL = 'openai/whisper-large-v3'
+export const maxDuration = 60 // Vercel: allow up to 60s for model cold-start
+
+const HF_MODEL = 'openai/whisper-large-v3-turbo'
 // Use the HF Inference router (hf-inference provider) — works with free-tier tokens
 const HF_API_URL = `https://router.huggingface.co/hf-inference/models/${HF_MODEL}`
 

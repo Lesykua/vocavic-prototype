@@ -46,34 +46,28 @@ export async function POST(req: NextRequest) {
   }
 
   let extracted: ShiftNoteStructured
+  try {
+    const raw = await hfChat({
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: `Transcript: "${transcript.trim()}"` },
+      ],
+      maxTokens: 256,
+      temperature: 0.1,
+    })
 
-  if (!process.env.HF_API_TOKEN) {
-    // No token configured — return empty fields so the user can fill them in manually
-    extracted = { tags: [] }
-  } else {
-    try {
-      const raw = await hfChat({
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: `Transcript: "${transcript.trim()}"` },
-        ],
-        maxTokens: 256,
-        temperature: 0.1,
-      })
+    const parsed = parseJsonResponse<Record<string, unknown>>(raw)
 
-      const parsed = parseJsonResponse<Record<string, unknown>>(raw)
-
-      extracted = {
-        tags: Array.isArray(parsed.tags) ? (parsed.tags as string[]) : [],
-        reason: typeof parsed.reason === 'string' ? parsed.reason : undefined,
-        machine: typeof parsed.machine === 'string' ? parsed.machine : undefined,
-        component: typeof parsed.component === 'string' ? parsed.component : undefined,
-        actionTaken: typeof parsed.actionTaken === 'string' ? parsed.actionTaken : undefined,
-        lesson: typeof parsed.lesson === 'string' ? parsed.lesson : undefined,
-      }
-    } catch (err) {
-      return NextResponse.json({ error: 'Failed to parse note', detail: String(err) }, { status: 502 })
+    extracted = {
+      tags: Array.isArray(parsed.tags) ? (parsed.tags as string[]) : [],
+      reason: typeof parsed.reason === 'string' ? parsed.reason : undefined,
+      machine: typeof parsed.machine === 'string' ? parsed.machine : undefined,
+      component: typeof parsed.component === 'string' ? parsed.component : undefined,
+      actionTaken: typeof parsed.actionTaken === 'string' ? parsed.actionTaken : undefined,
+      lesson: typeof parsed.lesson === 'string' ? parsed.lesson : undefined,
     }
+  } catch (err) {
+    return NextResponse.json({ error: 'Failed to parse note', detail: String(err) }, { status: 502 })
   }
 
   const completeness = enrichWithCompleteness(extracted)

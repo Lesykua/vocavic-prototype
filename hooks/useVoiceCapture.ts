@@ -14,16 +14,24 @@ export interface UseVoiceCaptureReturn {
   reset: () => void
 }
 
+declare global {
+  interface Window {
+    SpeechRecognition: typeof SpeechRecognition
+    webkitSpeechRecognition: typeof SpeechRecognition
+  }
+}
+
 export function useVoiceCapture(): UseVoiceCaptureReturn {
   const [state, setState] = useState<RecordingState>('idle')
   const [transcript, setTranscript] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [durationMs, setDurationMs] = useState(0)
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const chunksRef = useRef<Blob[]>([])
+  const recognitionRef = useRef<SpeechRecognition | null>(null)
   const startTimeRef = useRef<number>(0)
   const durationTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const finalRef = useRef<string>('')
+  const interimRef = useRef<string>('')
 
   const stopDurationTimer = useCallback(() => {
     if (durationTimerRef.current) {
@@ -32,102 +40,101 @@ export function useVoiceCapture(): UseVoiceCaptureReturn {
     }
   }, [])
 
-  const transcribeAudio = useCallback(async (audioBlob: Blob) => {
-    setState('processing')
-
-    const formData = new FormData()
-    formData.append('audio', audioBlob, 'recording.webm')
-
-    // Retry up to 3 times to handle model-loading 503s
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      const res = await fetch('/api/transcribe', { method: 'POST', body: formData })
-      const data = await res.json() as { transcript?: string; error?: string; loading?: boolean }
-
-      if (res.status === 503 && data.loading) {
-        if (attempt < 3) {
-          await new Promise(r => setTimeout(r, 5000))
-          continue
-        }
-        setError('Whisper model is still loading. Please try again in a moment.')
-        setState('error')
-        return
-      }
-
-      if (!res.ok) {
-        setError(data.error ?? 'Transcription failed')
-        setState('error')
-        return
-      }
-
-      setTranscript(data.transcript ?? '')
-      setState('done')
-      return
-    }
-  }, [])
-
   const startRecording = useCallback(async () => {
     setError(null)
     setTranscript(null)
     setDurationMs(0)
-    chunksRef.current = []
+    finalRef.current = ''
+    interimRef.current = ''
 
-    let stream: MediaStream
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    } catch {
-      setError('Microphone access denied. Please allow microphone access and try again.')
+    const SR = (typeof window !== 'undefined')
+      ? (window.SpeechRecognition ?? window.webkitSpeechRecognition)
+      : null
+
+    if (!SR) {
+      setError('Speech recognition is not supported in this browser. Please use Chrome or Edge.')
       setState('error')
       return
     }
 
-    // Prefer webm/opus; fall back to whatever the browser supports
-    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-      ? 'audio/webm;codecs=opus'
-      : MediaRecorder.isTypeSupported('audio/webm')
-      ? 'audio/webm'
-      : ''
+    const recognition = new SR()
+    recognition.continuous = true
+    recognition.interimResults = true
+    recognition.lang = 'en-US'
+    recognitionRef.current = recognition
 
-    const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
-    mediaRecorderRef.current = recorder
-
-    recorder.ondataavailable = (e) => {
-      if (e.data.size > 0) chunksRef.current.push(e.data)
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let interim = ''
+      let accumulated = finalRef.current
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i]
+        if (result.isFinal) {
+          accumulated += result[0].transcript + ' '
+        } else {
+          interim += result[0].transcript
+        }
+      }
+      finalRef.current = accumulated
+      interimRef.current = interim
+      setTranscript((accumulated + interim).trim() || null)
     }
 
-    recorder.onstop = async () => {
-      stream.getTracks().forEach(t => t.stop())
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      stopDurationTimer()
+      if (event.error === 'not-allowed') {
+        setError('Microphone access denied. Please allow microphone access and try again.')
+        setState('error')
+      } else if (event.error === 'no-speech') {
+        // non-fatal: keep going
+      } else {
+        setError(`Speech recognition error: ${event.error}`)
+        setState('error')
+      }
+    }
+
+    recognition.onend = () => {
       stopDurationTimer()
       setDurationMs(Date.now() - startTimeRef.current)
-
-      const audioBlob = new Blob(chunksRef.current, { type: mimeType || 'audio/webm' })
-      await transcribeAudio(audioBlob)
+      const full = (finalRef.current + interimRef.current).trim()
+      setTranscript(full || null)
+      setState('done')
     }
 
-    recorder.start(250) // collect data every 250ms
+    try {
+      recognition.start()
+    } catch {
+      setError('Could not start speech recognition. Please try again.')
+      setState('error')
+      return
+    }
+
     startTimeRef.current = Date.now()
     setState('recording')
 
     durationTimerRef.current = setInterval(() => {
       setDurationMs(Date.now() - startTimeRef.current)
     }, 200)
-  }, [stopDurationTimer, transcribeAudio])
+  }, [stopDurationTimer])
 
   const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop()
+    if (recognitionRef.current) {
+      recognitionRef.current.stop()
+      recognitionRef.current = null
     }
   }, [])
 
   const reset = useCallback(() => {
     stopDurationTimer()
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop()
+    if (recognitionRef.current) {
+      recognitionRef.current.abort()
+      recognitionRef.current = null
     }
     setState('idle')
     setTranscript(null)
     setError(null)
     setDurationMs(0)
-    chunksRef.current = []
+    finalRef.current = ''
+    interimRef.current = ''
   }, [stopDurationTimer])
 
   return { state, transcript, error, durationMs, startRecording, stopRecording, reset }

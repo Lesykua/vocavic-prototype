@@ -1964,13 +1964,25 @@
       } catch { return []; }
     }
     const capturedNotes = loadCapturedNotes();
-    const allMockNotes  = [...capturedNotes, ...mockNotes];
+    // Prerecorded notes are pinned to a fixed demo date so they always read as
+    // "today" — real captured notes are judged against the real clock instead.
+    // Each note carries its own _anchor so the two sets never fight over one
+    // global "now" (that used to make the mock stream vanish once any real
+    // note existed).
+    const mockAnchor = new Date("2026-04-03T15:24:12");
+    const anchorNow = new Date();
+    function tagAnchor(notes, anchor) {
+      return notes.map((n) => ({ ...n, _anchor: anchor.getTime() }));
+    }
+    const allMockNotes = [...tagAnchor(capturedNotes, anchorNow), ...tagAnchor(mockNotes, mockAnchor)];
     // ─────────────────────────────────────────────────────────────────────────
 
     const noteState = JSON.parse(JSON.stringify(allMockNotes));
-    // Use real time when live notes exist so their timestamps resolve correctly.
-    // Fall back to the demo anchor so mock notes still appear in "Today" filter.
-    const anchorNow = capturedNotes.length ? new Date() : new Date("2026-04-03T15:24:12");
+    // "Global" anchor for chrome that isn't per-note (e.g. the context strip) —
+    // prefers real time once there's live activity, otherwise the demo anchor.
+    function primaryAnchor() {
+      return capturedNotes.length ? anchorNow : mockAnchor;
+    }
     const state = {
       theme: "light",
       site: capturedNotes.length ? "All Sites" : "Press Hall",
@@ -2042,10 +2054,10 @@
       return new Date(ts);
     }
 
-    function getWindowStart(range) {
-      if (range === "Last 60m") return new Date(anchorNow.getTime() - 60 * 60 * 1000);
-      if (range === "4h") return new Date(anchorNow.getTime() - 4 * 60 * 60 * 1000);
-      return new Date(anchorNow.getFullYear(), anchorNow.getMonth(), anchorNow.getDate(), 0, 0, 0, 0);
+    function getWindowStart(anchor, range) {
+      if (range === "Last 60m") return new Date(anchor.getTime() - 60 * 60 * 1000);
+      if (range === "4h") return new Date(anchor.getTime() - 4 * 60 * 60 * 1000);
+      return new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate(), 0, 0, 0, 0);
     }
 
     function isSameDay(dateA, dateB) {
@@ -2082,15 +2094,16 @@
 
     function filterByControls(notes, options = {}) {
       const settings = { includeTime: true, includeShift: true, ...options };
-      const windowStart = getWindowStart(state.timeRange);
       return notes.filter((note) => {
         if (state.site !== "All Sites" && note.site !== state.site) return false;
         if (state.line !== "All Lines" && note.line !== state.line) return false;
         if (state.operator !== "All Operators" && note.operator !== state.operator) return false;
         if (settings.includeShift && state.shift !== "All" && note.shift !== state.shift) return false;
         if (settings.includeTime) {
+          const anchor = new Date(note._anchor ?? anchorNow.getTime());
+          const windowStart = getWindowStart(anchor, state.timeRange);
           const ts = parseTs(note.ts);
-          if (ts < windowStart || ts > anchorNow) return false;
+          if (ts < windowStart || ts > anchor) return false;
         }
         return true;
       });
@@ -2103,7 +2116,8 @@
     function todayNotesForTiles() {
       return allNotes().filter((note) => {
         const ts = parseTs(note.ts);
-        if (!isSameDay(ts, anchorNow)) return false;
+        const anchor = new Date(note._anchor ?? anchorNow.getTime());
+        if (!isSameDay(ts, anchor)) return false;
         if (state.site !== "All Sites" && note.site !== state.site) return false;
         if (state.line !== "All Lines" && note.line !== state.line) return false;
         if (state.operator !== "All Operators" && note.operator !== state.operator) return false;
@@ -2554,8 +2568,8 @@
 
     function renderContextStrip(notes) {
       const selection = getContextSelection(notes);
-      const windowStart = getWindowStart(state.timeRange);
-      const windowEnd = anchorNow;
+      const windowStart = getWindowStart(primaryAnchor(), state.timeRange);
+      const windowEnd = primaryAnchor();
       const laneStates = contextStates.filter((item) => item.site === selection.site && item.line === selection.line);
       const laneNotes = notes.filter((note) => note.site === selection.site && note.line === selection.line);
       const alarms = laneNotes.flatMap((note) => note.context.alarms);
@@ -3088,8 +3102,8 @@
         _lastNoteCount = fresh.length;
         // Rebuild noteState: captured notes first, then mock notes
         noteState.length = 0;
-        [...fresh, ...mockNotes].forEach(n => noteState.push(JSON.parse(JSON.stringify(n))));
-        // First live note: switch to real time anchor and show all sites
+        [...tagAnchor(fresh, anchorNow), ...tagAnchor(mockNotes, mockAnchor)].forEach(n => noteState.push(JSON.parse(JSON.stringify(n))));
+        // First live note: show all sites so it's visible alongside the demo stream
         if (fresh.length === 1) {
           anchorNow.setTime(Date.now());
           state.site = "All Sites";

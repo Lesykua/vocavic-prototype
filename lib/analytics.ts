@@ -7,6 +7,7 @@ export interface OperationalMetrics {
   avgCompletenessScore: number
   completenessTrend: { date: string; avgScore: number; noteCount: number }[]
   notesByMachine: { machine: string; count: number }[]
+  notesByShift: { shift: string; count: number }[]
   recurringIssues: { reason: string; machine: string | null; count: number }[]
   openFollowUps: { id: string; machine: string | null; reason: string | null; createdAt: string }[]
 }
@@ -20,12 +21,43 @@ export interface PilotDemoMetrics {
   topTags: { tag: string; count: number }[]
 }
 
-const TREND_WINDOW_DAYS = 30
+export interface FilterOptions {
+  machines: string[]
+}
 
-export async function getOperationalMetrics(): Promise<OperationalMetrics> {
+export interface AnalyticsFilters {
+  machine?: string
+  shift?: 'A' | 'B' | 'C'
+  /** Rolling window in days. Omit (or 0) for all-time. */
+  days?: number
+}
+
+const DEFAULT_TREND_WINDOW_DAYS = 30
+
+// The CASE expression below mirrors the shift-letter logic already used in
+// public/live-dashboard.html's getShiftLetter(). It's typed out literally at
+// each call site rather than factored into a shared constant: the sql tag
+// binds every ${} placeholder as a query PARAMETER, not raw SQL text, so
+// there is no way to splice a reusable SQL fragment through interpolation
+// here (that's a postgres.js feature, not part of Neon's driver) — the only
+// safe option is literal, repeated SQL text.
+
+export async function getFilterOptions(): Promise<FilterOptions> {
   await ensureNotesTable()
+  const rows = await sql<{ machine: string }>`
+    SELECT DISTINCT machine FROM notes WHERE machine IS NOT NULL ORDER BY machine
+  `
+  return { machines: rows.map((r) => r.machine) }
+}
 
-  const [totals, trend, byMachine, recurring, followUps] = await Promise.all([
+export async function getOperationalMetrics(filters: AnalyticsFilters = {}): Promise<OperationalMetrics> {
+  await ensureNotesTable()
+  const machine = filters.machine ?? null
+  const shift = filters.shift ?? null
+  const days = filters.days && filters.days > 0 ? filters.days : null
+  const trendDays = days ?? DEFAULT_TREND_WINDOW_DAYS
+
+  const [totals, trend, byMachine, byShift, recurring, followUps] = await Promise.all([
     sql<{ note_count: string; complete_count: string; incomplete_count: string; avg_score: number | null }>`
       SELECT
         COUNT(*)::int AS note_count,
@@ -33,6 +65,13 @@ export async function getOperationalMetrics(): Promise<OperationalMetrics> {
         COUNT(*) FILTER (WHERE NOT is_complete)::int AS incomplete_count,
         AVG(completeness_score) AS avg_score
       FROM notes
+      WHERE (${machine}::text IS NULL OR machine = ${machine})
+        AND (${shift}::text IS NULL OR (CASE
+              WHEN EXTRACT(HOUR FROM created_at) >= 6 AND EXTRACT(HOUR FROM created_at) < 14 THEN 'A'
+              WHEN EXTRACT(HOUR FROM created_at) >= 14 AND EXTRACT(HOUR FROM created_at) < 22 THEN 'B'
+              ELSE 'C'
+            END) = ${shift})
+        AND (${days}::int IS NULL OR created_at >= NOW() - (${days} * INTERVAL '1 day'))
     `,
     sql<{ day: string; avg_score: number | null; note_count: string }>`
       SELECT
@@ -40,7 +79,13 @@ export async function getOperationalMetrics(): Promise<OperationalMetrics> {
         AVG(completeness_score) AS avg_score,
         COUNT(*)::int AS note_count
       FROM notes
-      WHERE created_at >= NOW() - (${TREND_WINDOW_DAYS} * INTERVAL '1 day')
+      WHERE created_at >= NOW() - (${trendDays} * INTERVAL '1 day')
+        AND (${machine}::text IS NULL OR machine = ${machine})
+        AND (${shift}::text IS NULL OR (CASE
+              WHEN EXTRACT(HOUR FROM created_at) >= 6 AND EXTRACT(HOUR FROM created_at) < 14 THEN 'A'
+              WHEN EXTRACT(HOUR FROM created_at) >= 14 AND EXTRACT(HOUR FROM created_at) < 22 THEN 'B'
+              ELSE 'C'
+            END) = ${shift})
       GROUP BY day
       ORDER BY day ASC
     `,
@@ -48,14 +93,41 @@ export async function getOperationalMetrics(): Promise<OperationalMetrics> {
       SELECT machine, COUNT(*)::int AS count
       FROM notes
       WHERE machine IS NOT NULL
+        AND (${shift}::text IS NULL OR (CASE
+              WHEN EXTRACT(HOUR FROM created_at) >= 6 AND EXTRACT(HOUR FROM created_at) < 14 THEN 'A'
+              WHEN EXTRACT(HOUR FROM created_at) >= 14 AND EXTRACT(HOUR FROM created_at) < 22 THEN 'B'
+              ELSE 'C'
+            END) = ${shift})
+        AND (${days}::int IS NULL OR created_at >= NOW() - (${days} * INTERVAL '1 day'))
       GROUP BY machine
       ORDER BY count DESC
       LIMIT 10
+    `,
+    sql<{ shift: string; count: string }>`
+      SELECT
+        (CASE
+          WHEN EXTRACT(HOUR FROM created_at) >= 6 AND EXTRACT(HOUR FROM created_at) < 14 THEN 'A'
+          WHEN EXTRACT(HOUR FROM created_at) >= 14 AND EXTRACT(HOUR FROM created_at) < 22 THEN 'B'
+          ELSE 'C'
+        END) AS shift,
+        COUNT(*)::int AS count
+      FROM notes
+      WHERE (${machine}::text IS NULL OR machine = ${machine})
+        AND (${days}::int IS NULL OR created_at >= NOW() - (${days} * INTERVAL '1 day'))
+      GROUP BY shift
+      ORDER BY shift ASC
     `,
     sql<{ reason: string; machine: string | null; count: string }>`
       SELECT reason, machine, COUNT(*)::int AS count
       FROM notes
       WHERE reason IS NOT NULL
+        AND (${machine}::text IS NULL OR machine = ${machine})
+        AND (${shift}::text IS NULL OR (CASE
+              WHEN EXTRACT(HOUR FROM created_at) >= 6 AND EXTRACT(HOUR FROM created_at) < 14 THEN 'A'
+              WHEN EXTRACT(HOUR FROM created_at) >= 14 AND EXTRACT(HOUR FROM created_at) < 22 THEN 'B'
+              ELSE 'C'
+            END) = ${shift})
+        AND (${days}::int IS NULL OR created_at >= NOW() - (${days} * INTERVAL '1 day'))
       GROUP BY reason, machine
       HAVING COUNT(*) > 1
       ORDER BY count DESC
@@ -65,6 +137,13 @@ export async function getOperationalMetrics(): Promise<OperationalMetrics> {
       SELECT id, machine, reason, created_at
       FROM notes
       WHERE NOT is_complete
+        AND (${machine}::text IS NULL OR machine = ${machine})
+        AND (${shift}::text IS NULL OR (CASE
+              WHEN EXTRACT(HOUR FROM created_at) >= 6 AND EXTRACT(HOUR FROM created_at) < 14 THEN 'A'
+              WHEN EXTRACT(HOUR FROM created_at) >= 14 AND EXTRACT(HOUR FROM created_at) < 22 THEN 'B'
+              ELSE 'C'
+            END) = ${shift})
+        AND (${days}::int IS NULL OR created_at >= NOW() - (${days} * INTERVAL '1 day'))
       ORDER BY created_at DESC
       LIMIT 20
     `,
@@ -82,6 +161,7 @@ export async function getOperationalMetrics(): Promise<OperationalMetrics> {
       noteCount: Number(r.note_count),
     })),
     notesByMachine: byMachine.map((r) => ({ machine: r.machine, count: Number(r.count) })),
+    notesByShift: byShift.map((r) => ({ shift: r.shift, count: Number(r.count) })),
     recurringIssues: recurring.map((r) => ({ reason: r.reason, machine: r.machine, count: Number(r.count) })),
     openFollowUps: followUps.map((r) => ({
       id: r.id,
@@ -92,8 +172,11 @@ export async function getOperationalMetrics(): Promise<OperationalMetrics> {
   }
 }
 
-export async function getPilotDemoMetrics(): Promise<PilotDemoMetrics> {
+export async function getPilotDemoMetrics(filters: AnalyticsFilters = {}): Promise<PilotDemoMetrics> {
   await ensureNotesTable()
+  const machine = filters.machine ?? null
+  const shift = filters.shift ?? null
+  const days = filters.days && filters.days > 0 ? filters.days : null
 
   const [totals, last7, tags] = await Promise.all([
     sql<{ total: string; active_devices: string; tagged: string; avg_score: number | null }>`
@@ -103,17 +186,37 @@ export async function getPilotDemoMetrics(): Promise<PilotDemoMetrics> {
         COUNT(*) FILTER (WHERE array_length(tags, 1) > 0)::int AS tagged,
         AVG(completeness_score) AS avg_score
       FROM notes
+      WHERE (${machine}::text IS NULL OR machine = ${machine})
+        AND (${shift}::text IS NULL OR (CASE
+              WHEN EXTRACT(HOUR FROM created_at) >= 6 AND EXTRACT(HOUR FROM created_at) < 14 THEN 'A'
+              WHEN EXTRACT(HOUR FROM created_at) >= 14 AND EXTRACT(HOUR FROM created_at) < 22 THEN 'B'
+              ELSE 'C'
+            END) = ${shift})
+        AND (${days}::int IS NULL OR created_at >= NOW() - (${days} * INTERVAL '1 day'))
     `,
     sql<{ day: string; count: string }>`
       SELECT date_trunc('day', created_at)::date AS day, COUNT(*)::int AS count
       FROM notes
       WHERE created_at >= NOW() - INTERVAL '7 days'
+        AND (${machine}::text IS NULL OR machine = ${machine})
+        AND (${shift}::text IS NULL OR (CASE
+              WHEN EXTRACT(HOUR FROM created_at) >= 6 AND EXTRACT(HOUR FROM created_at) < 14 THEN 'A'
+              WHEN EXTRACT(HOUR FROM created_at) >= 14 AND EXTRACT(HOUR FROM created_at) < 22 THEN 'B'
+              ELSE 'C'
+            END) = ${shift})
       GROUP BY day
       ORDER BY day ASC
     `,
     sql<{ tag: string; count: string }>`
       SELECT unnest(tags) AS tag, COUNT(*)::int AS count
       FROM notes
+      WHERE (${machine}::text IS NULL OR machine = ${machine})
+        AND (${shift}::text IS NULL OR (CASE
+              WHEN EXTRACT(HOUR FROM created_at) >= 6 AND EXTRACT(HOUR FROM created_at) < 14 THEN 'A'
+              WHEN EXTRACT(HOUR FROM created_at) >= 14 AND EXTRACT(HOUR FROM created_at) < 22 THEN 'B'
+              ELSE 'C'
+            END) = ${shift})
+        AND (${days}::int IS NULL OR created_at >= NOW() - (${days} * INTERVAL '1 day'))
       GROUP BY tag
       ORDER BY count DESC
       LIMIT 10

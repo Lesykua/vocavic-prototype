@@ -1,13 +1,14 @@
 import Link from 'next/link'
-import { getOperationalMetrics, getPilotDemoMetrics } from '@/lib/analytics'
+import { getOperationalMetrics, getPilotDemoMetrics, getFilterOptions, AnalyticsFilters } from '@/lib/analytics'
 
 export const metadata = {
   title: 'Vocavic — Analytics',
 }
 
-// No searchParams to read anymore (the access-code gate was removed), which
-// would otherwise let Next statically prerender this at build time and
-// freeze it on stale numbers — force per-request rendering instead.
+// Reads searchParams for filters, which already forces per-request rendering —
+// kept explicit so this doesn't silently regress to a build-time static page
+// (that bug bit this page once already: it'd freeze on whatever numbers
+// existed when `next build` ran).
 export const dynamic = 'force-dynamic'
 
 const CARD = 'rgba(255,251,245,0.85)'
@@ -64,6 +65,56 @@ function BarRows({
   )
 }
 
+/** Hand-rolled SVG line/area chart — no charting dependency, matches the
+ * landing page's existing div-bar chart precedent in spirit. */
+function TrendChart({
+  points,
+  emptyLabel,
+  valueSuffix = '',
+}: {
+  points: { label: string; value: number }[]
+  emptyLabel: string
+  valueSuffix?: string
+}) {
+  if (points.length === 0) {
+    return <p className="text-sm" style={{ color: MUTED }}>{emptyLabel}</p>
+  }
+  if (points.length === 1) {
+    return (
+      <div className="flex items-baseline gap-2">
+        <span className="font-extrabold" style={{ fontFamily: 'var(--font-barlow-condensed)', fontSize: '2rem', color: ACCENT }}>
+          {points[0].value}{valueSuffix}
+        </span>
+        <span className="text-xs" style={{ color: MUTED }}>on {points[0].label}</span>
+      </div>
+    )
+  }
+
+  const max = Math.max(...points.map((p) => p.value), 1)
+  const stepX = 100 / (points.length - 1)
+  const coords = points.map((p, i) => ({ x: i * stepX, y: 100 - (p.value / max) * 92 }))
+  const lineD = coords.map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x.toFixed(2)} ${c.y.toFixed(2)}`).join(' ')
+  const areaD = `${lineD} L ${coords[coords.length - 1].x.toFixed(2)} 100 L ${coords[0].x.toFixed(2)} 100 Z`
+
+  return (
+    <div>
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ width: '100%', height: 140 }}>
+        <path d={areaD} fill={ACCENT} fillOpacity={0.12} stroke="none" />
+        <path d={lineD} fill="none" stroke={ACCENT} strokeWidth={1.6} vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
+        {coords.map((c, i) => (
+          <circle key={i} cx={c.x} cy={c.y} r={1.4} fill={ACCENT} />
+        ))}
+      </svg>
+      <div className="flex justify-between text-xs mt-1" style={{ color: MUTED }}>
+        <span>{points[0].label}</span>
+        <span>
+          {points[points.length - 1].label} · {points[points.length - 1].value}{valueSuffix}
+        </span>
+      </div>
+    </div>
+  )
+}
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section
@@ -85,13 +136,97 @@ function formatDay(iso: string) {
   return new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric' })
 }
 
-export default async function AnalyticsPage() {
+const DAY_OPTIONS = [
+  { value: '7', label: 'Last 7 days' },
+  { value: '30', label: 'Last 30 days' },
+  { value: '90', label: 'Last 90 days' },
+  { value: '0', label: 'All time' },
+]
+
+function FilterBar({
+  machines,
+  filters,
+  daysValue,
+}: {
+  machines: string[]
+  filters: AnalyticsFilters
+  daysValue: string
+}) {
+  const selectStyle: React.CSSProperties = {
+    border: `1px solid ${BORDER}`,
+    borderRadius: '10px',
+    padding: '0.5rem 0.75rem',
+    fontSize: '0.85rem',
+    color: TEXT,
+    background: '#fff',
+  }
+  const hasActiveFilters = Boolean(filters.machine || filters.shift || (filters.days && filters.days !== 30))
+
+  return (
+    <form method="get" className="flex flex-wrap items-end gap-3 mb-6">
+      <div className="flex flex-col gap-1">
+        <label htmlFor="machine" className="text-xs font-semibold uppercase tracking-wide" style={{ color: MUTED }}>Machine</label>
+        <select id="machine" name="machine" defaultValue={filters.machine ?? ''} style={selectStyle}>
+          <option value="">All machines</option>
+          {machines.map((m) => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
+      </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="shift" className="text-xs font-semibold uppercase tracking-wide" style={{ color: MUTED }}>Shift</label>
+        <select id="shift" name="shift" defaultValue={filters.shift ?? ''} style={selectStyle}>
+          <option value="">All shifts</option>
+          <option value="A">A (06:00–14:00)</option>
+          <option value="B">B (14:00–22:00)</option>
+          <option value="C">C (22:00–06:00)</option>
+        </select>
+      </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="days" className="text-xs font-semibold uppercase tracking-wide" style={{ color: MUTED }}>Range</label>
+        <select id="days" name="days" defaultValue={daysValue} style={selectStyle}>
+          {DAY_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </div>
+      <button
+        type="submit"
+        className="text-xs font-semibold px-4 py-2 rounded-lg text-white"
+        style={{ background: ACCENT }}
+      >
+        Apply
+      </button>
+      {hasActiveFilters && (
+        <Link href="/analytics" className="text-xs font-semibold hover:underline" style={{ color: MUTED }}>
+          Clear filters
+        </Link>
+      )}
+    </form>
+  )
+}
+
+export default async function AnalyticsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ machine?: string; shift?: string; days?: string }>
+}) {
+  const params = await searchParams
+  const daysValue = params.days ?? '30'
+  const filters: AnalyticsFilters = {
+    machine: params.machine || undefined,
+    shift: params.shift === 'A' || params.shift === 'B' || params.shift === 'C' ? params.shift : undefined,
+    days: Number(daysValue) || undefined,
+  }
+
   let operational: Awaited<ReturnType<typeof getOperationalMetrics>>
   let pilotDemo: Awaited<ReturnType<typeof getPilotDemoMetrics>>
+  let machines: string[]
   try {
-    ;[operational, pilotDemo] = await Promise.all([
-      getOperationalMetrics(),
-      getPilotDemoMetrics(),
+    ;[operational, pilotDemo, { machines }] = await Promise.all([
+      getOperationalMetrics(filters),
+      getPilotDemoMetrics(filters),
+      getFilterOptions(),
     ])
   } catch {
     return (
@@ -108,6 +243,8 @@ export default async function AnalyticsPage() {
       </main>
     )
   }
+
+  const rangeLabel = DAY_OPTIONS.find((o) => o.value === daysValue)?.label ?? 'Last 30 days'
 
   return (
     <main className="min-h-screen" style={{ background: '#f2ebe0', fontFamily: 'var(--font-barlow, sans-serif)' }}>
@@ -126,6 +263,8 @@ export default async function AnalyticsPage() {
 
       <div className="max-w-5xl mx-auto px-6 py-10 flex flex-col gap-10">
 
+        <FilterBar machines={machines} filters={filters} daysValue={daysValue} />
+
         {/* Pilot / demo half */}
         <div>
           <span
@@ -135,7 +274,7 @@ export default async function AnalyticsPage() {
             Pilot Impact
           </span>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-6">
-            <StatTile label="Notes captured" value={String(pilotDemo.totalNotesCaptured)} />
+            <StatTile label="Notes captured" value={String(pilotDemo.totalNotesCaptured)} sub={rangeLabel} />
             <StatTile label="Active devices" value={String(pilotDemo.activeDevices)} />
             <StatTile label="Tag coverage" value={`${pilotDemo.tagCoveragePct}%`} />
             <StatTile label="Avg completeness" value={`${pilotDemo.avgCompletenessScore}/100`} />
@@ -157,14 +296,11 @@ export default async function AnalyticsPage() {
             Operational Trends
           </span>
           <div className="grid md:grid-cols-2 gap-6">
-            <Section title="Completeness trend — last 30 days">
-              <BarRows
-                emptyLabel="No notes in the last 30 days yet."
-                rows={operational.completenessTrend.map((d) => ({
-                  label: formatDay(d.date),
-                  value: d.avgScore,
-                  sub: '/100',
-                }))}
+            <Section title={`Completeness trend — ${rangeLabel.toLowerCase()}`}>
+              <TrendChart
+                emptyLabel="No notes in this range yet."
+                valueSuffix="/100"
+                points={operational.completenessTrend.map((d) => ({ label: formatDay(d.date), value: d.avgScore }))}
               />
             </Section>
 
@@ -172,6 +308,17 @@ export default async function AnalyticsPage() {
               <BarRows
                 emptyLabel="No machine data yet."
                 rows={operational.notesByMachine.map((m) => ({ label: m.machine, value: m.count }))}
+              />
+            </Section>
+
+            <Section title="Notes by shift">
+              <BarRows
+                emptyLabel="No shift data yet."
+                rows={operational.notesByShift.map((s) => ({
+                  label: `Shift ${s.shift}`,
+                  value: s.count,
+                  color: s.shift === 'A' ? '#0f5f68' : s.shift === 'B' ? '#c68a22' : '#2f8f63',
+                }))}
               />
             </Section>
 

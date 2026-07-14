@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getOperationalMetrics, getPilotDemoMetrics } from '@/lib/analytics'
-import { requirePilotCode } from '@/lib/auth'
 
 export interface AnalyticsResponse {
   operational: Awaited<ReturnType<typeof getOperationalMetrics>>
@@ -8,10 +7,7 @@ export interface AnalyticsResponse {
   generatedAt: string
 }
 
-export async function GET(req: NextRequest) {
-  const unauthorized = requirePilotCode(req)
-  if (unauthorized) return unauthorized
-
+export async function GET() {
   try {
     const [operational, pilotDemo] = await Promise.all([
       getOperationalMetrics(),

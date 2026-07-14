@@ -1916,17 +1916,8 @@
 
     // ── Live capture adapter ──────────────────────────────────────────────────
     // Reads ShiftNote objects from the shared /api/notes backend — falling back
-    // to this browser's own localStorage if the network or pilot code isn't
-    // available — and maps them to the dashboard note schema, merged with mockNotes.
-    const PILOT_CODE_KEY = "vocavic_pilot_code";
-    function getPilotCode() {
-      let code = localStorage.getItem(PILOT_CODE_KEY);
-      if (!code) {
-        code = window.prompt("Pilot access code:") || "";
-        if (code) localStorage.setItem(PILOT_CODE_KEY, code);
-      }
-      return code;
-    }
+    // to this browser's own localStorage if the network isn't available — and
+    // maps them to the dashboard note schema, merged with mockNotes.
     function getShiftLetter(isoTs) {
       const h = new Date(isoTs).getHours();
       if (h >= 6 && h < 14) return "A";
@@ -1972,8 +1963,7 @@
     }
     async function fetchCapturedNotesRaw() {
       try {
-        const code = getPilotCode();
-        const res = await fetch("/api/notes?limit=500", { headers: { "x-pilot-code": code } });
+        const res = await fetch("/api/notes?limit=500");
         if (!res.ok) return loadCapturedNotesFromLocalStorage();
         const data = await res.json();
         return Array.isArray(data.notes) ? data.notes : [];
@@ -1983,8 +1973,7 @@
     }
     async function deleteCapturedNote(id) {
       try {
-        const code = getPilotCode();
-        await fetch(`/api/notes/${encodeURIComponent(id)}`, { method: "DELETE", headers: { "x-pilot-code": code } });
+        await fetch(`/api/notes/${encodeURIComponent(id)}`, { method: "DELETE" });
       } catch {}
     }
     // capturedNotesCache holds raw ShiftNote objects (used by renderEventLog);

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ShiftNote } from '@/lib/types'
 import { insertNote, listNotes } from '@/lib/notes-repo'
-import { requirePilotCode } from '@/lib/auth'
 
 function isValidNote(body: unknown): body is ShiftNote {
   if (!body || typeof body !== 'object') return false
@@ -19,9 +18,6 @@ function isValidNote(body: unknown): body is ShiftNote {
 }
 
 export async function POST(req: NextRequest) {
-  const unauthorized = requirePilotCode(req)
-  if (unauthorized) return unauthorized
-
   let body: unknown
   try {
     body = await req.json()
@@ -42,9 +38,6 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const unauthorized = requirePilotCode(req)
-  if (unauthorized) return unauthorized
-
   const { searchParams } = new URL(req.url)
   const since = searchParams.get('since') ?? undefined
   const deviceId = searchParams.get('deviceId') ?? undefined

@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { deleteNote } from '@/lib/notes-repo'
-import { requirePilotCode } from '@/lib/auth'
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const unauthorized = requirePilotCode(req)
-  if (unauthorized) return unauthorized
-
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
   try {

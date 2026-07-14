@@ -5,6 +5,11 @@ export const metadata = {
   title: 'Vocavic — Analytics',
 }
 
+// No searchParams to read anymore (the access-code gate was removed), which
+// would otherwise let Next statically prerender this at build time and
+// freeze it on stale numbers — force per-request rendering instead.
+export const dynamic = 'force-dynamic'
+
 const CARD = 'rgba(255,251,245,0.85)'
 const BORDER = 'rgba(18,35,44,0.12)'
 const TEXT = '#12232c'
@@ -80,57 +85,7 @@ function formatDay(iso: string) {
   return new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric' })
 }
 
-function GateForm({ error }: { error?: string }) {
-  return (
-    <main
-      className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: '#f2ebe0', fontFamily: 'var(--font-barlow, sans-serif)' }}
-    >
-      <form
-        method="get"
-        className="w-full max-w-sm rounded-2xl p-6 shadow-sm flex flex-col gap-4"
-        style={{ background: '#fff' }}
-      >
-        <div className="text-center">
-          <p className="font-semibold text-lg" style={{ color: ACCENT }}>Vocavic Analytics</p>
-          <p className="text-sm mt-1" style={{ color: MUTED }}>Enter the pilot access code to view analytics.</p>
-        </div>
-        <input
-          type="password"
-          name="code"
-          placeholder="Pilot access code"
-          className="w-full px-4 py-3 rounded-xl text-sm"
-          style={{ border: `1px solid ${BORDER}`, color: TEXT }}
-          autoFocus
-        />
-        {error && <p className="text-xs text-center" style={{ color: '#d65848' }}>{error}</p>}
-        <button
-          type="submit"
-          className="w-full py-3 rounded-xl font-semibold text-white"
-          style={{ background: ACCENT }}
-        >
-          Continue
-        </button>
-      </form>
-    </main>
-  )
-}
-
-export default async function AnalyticsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ code?: string }>
-}) {
-  const { code } = await searchParams
-  const expected = process.env.PILOT_ACCESS_CODE
-
-  if (!expected) {
-    return <GateForm error="PILOT_ACCESS_CODE is not configured on the server." />
-  }
-  if (code !== expected) {
-    return <GateForm error={code ? 'That code was rejected — try again.' : undefined} />
-  }
-
+export default async function AnalyticsPage() {
   let operational: Awaited<ReturnType<typeof getOperationalMetrics>>
   let pilotDemo: Awaited<ReturnType<typeof getPilotDemoMetrics>>
   try {

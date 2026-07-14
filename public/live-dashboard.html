@@ -1483,9 +1483,6 @@
             <span>Light / Dark</span>
             <small id="themeLabel">Light</small>
           </button>
-          <button type="button" class="theme-toggle" data-action="clear-captured-notes" id="clearCapturedBtn" style="border-color:#d65848;color:#d65848;">
-            <span id="clearCapturedLabel">Reset demo</span>
-          </button>
         </div>
       </div>
     </header>
@@ -1918,8 +1915,18 @@
     const summaryFallback = "No operator notes are currently inside the active window, so there is no live note pattern to summarize. Treat this as a quiet slice rather than a verified clean run: confirm the filters, confirm the time range, and keep watch for the next note arrival. If activity resumes, use the stream to check whether new notes cluster around a single asset, repeat a known tag theme, or point to a fresh follow-up that needs ownership before handover. Until then, the best risk line is simple discipline around tagging, asset labeling, and closing any outstanding follow-up before the next cluster of notes starts to build.";
 
     // ── Live capture adapter ──────────────────────────────────────────────────
-    // Reads ShiftNote objects saved by the /capture app from localStorage and
-    // maps them to the dashboard note schema, then prepends them to mockNotes.
+    // Reads ShiftNote objects from the shared /api/notes backend — falling back
+    // to this browser's own localStorage if the network or pilot code isn't
+    // available — and maps them to the dashboard note schema, merged with mockNotes.
+    const PILOT_CODE_KEY = "vocavic_pilot_code";
+    function getPilotCode() {
+      let code = localStorage.getItem(PILOT_CODE_KEY);
+      if (!code) {
+        code = window.prompt("Pilot access code:") || "";
+        if (code) localStorage.setItem(PILOT_CODE_KEY, code);
+      }
+      return code;
+    }
     function getShiftLetter(isoTs) {
       const h = new Date(isoTs).getHours();
       if (h >= 6 && h < 14) return "A";
@@ -1957,13 +1964,35 @@
         _capturedTags: Array.isArray(n.structured?.tags) ? n.structured.tags : [],
       };
     }
-    function loadCapturedNotes() {
+    function loadCapturedNotesFromLocalStorage() {
       try {
         const raw = localStorage.getItem("vocavic_notes");
-        return raw ? JSON.parse(raw).map(mapCapturedNote) : [];
+        return raw ? JSON.parse(raw) : [];
       } catch { return []; }
     }
-    const capturedNotes = loadCapturedNotes();
+    async function fetchCapturedNotesRaw() {
+      try {
+        const code = getPilotCode();
+        const res = await fetch("/api/notes?limit=500", { headers: { "x-pilot-code": code } });
+        if (!res.ok) return loadCapturedNotesFromLocalStorage();
+        const data = await res.json();
+        return Array.isArray(data.notes) ? data.notes : [];
+      } catch {
+        return loadCapturedNotesFromLocalStorage();
+      }
+    }
+    async function deleteCapturedNote(id) {
+      try {
+        const code = getPilotCode();
+        await fetch(`/api/notes/${encodeURIComponent(id)}`, { method: "DELETE", headers: { "x-pilot-code": code } });
+      } catch {}
+    }
+    // capturedNotesCache holds raw ShiftNote objects (used by renderEventLog);
+    // capturedNotes holds the same notes mapped to the dashboard shape (used by
+    // noteState below). Seeded synchronously from localStorage so the first
+    // paint isn't blank, then refined by the async fetch further down.
+    let capturedNotesCache = loadCapturedNotesFromLocalStorage();
+    let capturedNotes = capturedNotesCache.map(mapCapturedNote);
     // Prerecorded notes are pinned to a fixed demo date so they always read as
     // "today" — real captured notes are judged against the real clock instead.
     // Each note carries its own _anchor so the two sets never fight over one
@@ -2958,33 +2987,16 @@
         // Remove from noteState (in-memory)
         const idx = noteState.findIndex(n => n.id === id);
         if (idx !== -1) noteState.splice(idx, 1);
-        // Remove from localStorage
+        // Remove from the local mirror
         try {
           const stored = JSON.parse(localStorage.getItem("vocavic_notes") || "[]");
           localStorage.setItem("vocavic_notes", JSON.stringify(stored.filter(n => n.id !== id)));
         } catch {}
+        // Remove from the shared table (best-effort — local removal above already
+        // updates this browser's view even if the network call fails)
+        deleteCapturedNote(id);
         state.drawerOpen = false;
         state.selectedId = null;
-        render();
-        updateClearButton();
-      }
-      if (action === "clear-captured-notes") {
-        const label = document.getElementById("clearCapturedLabel");
-        if (label && label.textContent !== "Confirm reset") {
-          label.textContent = "Confirm reset";
-          setTimeout(() => { if (label) label.textContent = "Reset demo"; }, 3000);
-          return;
-        }
-        if (label) label.textContent = "Reset demo";
-        // Clear everything — captured notes deleted, feed goes empty
-        try { localStorage.removeItem("vocavic_notes"); } catch {}
-        noteState.length = 0;
-        _lastNoteCount = 0;   // prevent next poll from re-adding stale notes
-        state.drawerOpen = false;
-        state.selectedId = null;
-        state.site = "All Sites";
-        state.timeRange = "Today";
-        anchorNow.setTime(Date.now());
         render();
       }
     });
@@ -3047,13 +3059,7 @@
       const card = document.getElementById("shiftEventLogCard");
       if (!card) return;
 
-      let notes = [];
-      try {
-        const raw = localStorage.getItem("vocavic_notes");
-        notes = raw ? JSON.parse(raw) : [];
-      } catch { notes = []; }
-
-      const sorted = [...notes].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      const sorted = [...capturedNotesCache].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
       const headHtml = `
         <div class="side-head">
@@ -3094,25 +3100,30 @@
     render();
     renderEventLog();
 
-    // ── Live polling: detect new captured notes every 4 seconds ──────────────
-    let _lastNoteCount = loadCapturedNotes().length;
-    setInterval(() => {
-      const fresh = loadCapturedNotes();
+    // ── Live polling: fetch captured notes from the shared backend every 4s ──
+    let _lastNoteCount = capturedNotesCache.length;
+    async function refreshCapturedNotes() {
+      const fresh = await fetchCapturedNotesRaw();
       if (fresh.length !== _lastNoteCount) {
+        const cameFromEmpty = _lastNoteCount === 0 && fresh.length > 0;
         _lastNoteCount = fresh.length;
+        capturedNotesCache = fresh;
+        capturedNotes = fresh.map(mapCapturedNote);
+        anchorNow.setTime(Date.now());
         // Rebuild noteState: captured notes first, then mock notes
         noteState.length = 0;
-        [...tagAnchor(fresh, anchorNow), ...tagAnchor(mockNotes, mockAnchor)].forEach(n => noteState.push(JSON.parse(JSON.stringify(n))));
-        // First live note: show all sites so it's visible alongside the demo stream
-        if (fresh.length === 1) {
-          anchorNow.setTime(Date.now());
+        [...tagAnchor(capturedNotes, anchorNow), ...tagAnchor(mockNotes, mockAnchor)].forEach(n => noteState.push(JSON.parse(JSON.stringify(n))));
+        // First live note(s): show all sites so they're visible alongside the demo stream
+        if (cameFromEmpty) {
           state.site = "All Sites";
           state.timeRange = "Today";
         }
         render();
         renderEventLog();
       }
-    }, 4000);
+    }
+    refreshCapturedNotes(); // kick off the first network-backed refresh right away
+    setInterval(refreshCapturedNotes, 4000);
     // ─────────────────────────────────────────────────────────────────────────
   </script>
 </body>

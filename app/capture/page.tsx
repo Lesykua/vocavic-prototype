@@ -82,6 +82,92 @@ function saveNoteLocally(note: ShiftNote) {
   localStorage.setItem('vocavic_notes', JSON.stringify(existing))
 }
 
+// ── Shared-backend sync ─────────────────────────────────────────────────────
+// localStorage stays the instant, never-blocks-on-network write path (shop
+// floor wifi may be flaky) — this layer mirrors saved notes to the shared
+// Postgres table in the background so they show up on other devices too.
+const PILOT_CODE_KEY = 'vocavic_pilot_code'
+const SYNCED_IDS_KEY = 'vocavic_synced_ids'
+
+function getStoredPilotCode(): string | null {
+  return localStorage.getItem(PILOT_CODE_KEY)
+}
+
+function setStoredPilotCode(code: string) {
+  localStorage.setItem(PILOT_CODE_KEY, code)
+}
+
+function clearStoredPilotCode() {
+  localStorage.removeItem(PILOT_CODE_KEY)
+}
+
+function getSyncedIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(SYNCED_IDS_KEY)
+    return new Set(raw ? (JSON.parse(raw) as string[]) : [])
+  } catch {
+    return new Set()
+  }
+}
+
+function markSynced(id: string) {
+  const ids = getSyncedIds()
+  ids.add(id)
+  localStorage.setItem(SYNCED_IDS_KEY, JSON.stringify([...ids]))
+}
+
+/** Demo scaffolding never leaves the browser it was seeded on. */
+function isSyncable(note: ShiftNote): boolean {
+  return !note.id.startsWith('seed-')
+}
+
+async function syncNoteToServer(note: ShiftNote, code: string): Promise<boolean> {
+  try {
+    const res = await fetch('/api/notes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-pilot-code': code },
+      body: JSON.stringify(note),
+    })
+    if (res.ok) {
+      markSynced(note.id)
+      return true
+    }
+    return false
+  } catch {
+    return false
+  }
+}
+
+/** Verifies a pilot code and, if valid, fetches this shift's notes from every device. */
+async function fetchServerNotes(code: string): Promise<{ ok: boolean; notes: ShiftNote[] }> {
+  try {
+    const since = new Date(Date.now() - SHIFT_WINDOW_MS).toISOString()
+    const res = await fetch(`/api/notes?since=${encodeURIComponent(since)}&limit=200`, {
+      headers: { 'x-pilot-code': code },
+    })
+    if (res.status === 401) return { ok: false, notes: [] }
+    if (!res.ok) return { ok: true, notes: [] } // reachable but errored server-side — don't kick the user back to the gate
+    const data = (await res.json()) as { notes: ShiftNote[] }
+    return { ok: true, notes: data.notes }
+  } catch {
+    return { ok: true, notes: [] } // offline — proceed with local notes only
+  }
+}
+
+function mergeNotesById(a: ShiftNote[], b: ShiftNote[]): ShiftNote[] {
+  const byId = new Map<string, ShiftNote>()
+  for (const n of [...a, ...b]) byId.set(n.id, n)
+  return [...byId.values()].sort((x, y) => new Date(y.createdAt).getTime() - new Date(x.createdAt).getTime())
+}
+
+async function flushOutbox(notes: ShiftNote[], code: string) {
+  const synced = getSyncedIds()
+  const pending = notes.filter((n) => isSyncable(n) && !synced.has(n.id))
+  for (const note of pending) {
+    await syncNoteToServer(note, code)
+  }
+}
+
 /** Returns the most recent same-shift note that shares machine or reason. */
 function findRelatedNote(newNote: ShiftNote, existingNotes: ShiftNote[]): ShiftNote | null {
   const shiftStart = Date.now() - SHIFT_WINDOW_MS
@@ -110,6 +196,28 @@ export default function CapturePage() {
   const [savedNotes, setSavedNotes] = useState<ShiftNote[]>([])
   const [deviceId, setDeviceId] = useState('loading…')
   const [relatedNote, setRelatedNote] = useState<ShiftNote | null>(null)
+  const [pilotCode, setPilotCode] = useState<string | null>(null)
+  const [gateOpen, setGateOpen] = useState(true)
+  const [gateInput, setGateInput] = useState('')
+  const [gateError, setGateError] = useState<string | null>(null)
+  const [gateChecking, setGateChecking] = useState(false)
+
+  const unlockWithCode = async (code: string, localNotes: ShiftNote[]) => {
+    const { ok, notes: serverNotes } = await fetchServerNotes(code)
+    if (!ok) {
+      clearStoredPilotCode()
+      setGateError('That code was rejected — try again.')
+      setGateOpen(true)
+      return
+    }
+    setStoredPilotCode(code)
+    setPilotCode(code)
+    setGateOpen(false)
+    setGateError(null)
+    const merged = mergeNotesById(localNotes, serverNotes)
+    setSavedNotes(merged)
+    void flushOutbox(localNotes, code)
+  }
 
   useEffect(() => {
     const id = getDeviceId()
@@ -117,14 +225,41 @@ export default function CapturePage() {
     const stored = JSON.parse(localStorage.getItem('vocavic_notes') ?? '[]') as ShiftNote[]
     // Re-seed whenever only seed notes are present (keeps timestamps fresh across sessions)
     const onlySeedNotes = stored.length === 0 || stored.every(n => n.id.startsWith('seed-'))
+    let initial: ShiftNote[]
     if (onlySeedNotes) {
       const seeds = buildSeedNotes(id)
       localStorage.setItem('vocavic_notes', JSON.stringify(seeds))
-      setSavedNotes(seeds)
+      initial = seeds
     } else {
-      setSavedNotes(stored)
+      initial = stored
+    }
+    setSavedNotes(initial)
+
+    const storedCode = getStoredPilotCode()
+    if (storedCode) {
+      unlockWithCode(storedCode, initial)
+    } else {
+      setGateOpen(true)
     }
   }, [])
+
+  // Retry any notes that failed to sync once the device comes back online.
+  useEffect(() => {
+    const onOnline = () => {
+      if (pilotCode) void flushOutbox(savedNotes, pilotCode)
+    }
+    window.addEventListener('online', onOnline)
+    return () => window.removeEventListener('online', onOnline)
+  }, [pilotCode, savedNotes])
+
+  const handleGateSubmit = async () => {
+    const code = gateInput.trim()
+    if (!code) return
+    setGateChecking(true)
+    setGateError(null)
+    await unlockWithCode(code, savedNotes)
+    setGateChecking(false)
+  }
 
   const handleTranscript = (t: string) => {
     setTranscript(t)
@@ -138,6 +273,7 @@ export default function CapturePage() {
     setSavedNote(note)
     setSavedNotes(prev => [note, ...prev])
     setStep('saved')
+    if (pilotCode && isSyncable(note)) void syncNoteToServer(note, pilotCode)
   }
 
   const handleNew = () => {
@@ -145,6 +281,41 @@ export default function CapturePage() {
     setSavedNote(null)
     setRelatedNote(null)
     setStep('capture')
+  }
+
+  if (gateOpen) {
+    return (
+      <main
+        className="min-h-screen flex items-center justify-center px-4"
+        style={{ background: '#f2ebe0', fontFamily: 'var(--font-barlow, sans-serif)' }}
+      >
+        <div className="w-full max-w-sm rounded-2xl p-6 shadow-sm flex flex-col gap-4" style={{ background: '#fff' }}>
+          <div className="text-center">
+            <p className="font-semibold text-lg" style={{ color: '#0f5f68' }}>Vocavic</p>
+            <p className="text-sm mt-1" style={{ color: '#687d85' }}>Enter the pilot access code to capture and view shift notes.</p>
+          </div>
+          <input
+            type="password"
+            value={gateInput}
+            onChange={(e) => setGateInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleGateSubmit() }}
+            placeholder="Pilot access code"
+            className="w-full px-4 py-3 rounded-xl text-sm"
+            style={{ border: '1px solid rgba(18,35,44,0.15)', color: '#12232c' }}
+            autoFocus
+          />
+          {gateError && <p className="text-xs text-center" style={{ color: '#d65848' }}>{gateError}</p>}
+          <button
+            onClick={handleGateSubmit}
+            disabled={gateChecking || !gateInput.trim()}
+            className="w-full py-3 rounded-xl font-semibold text-white disabled:opacity-50"
+            style={{ background: '#0f5f68' }}
+          >
+            {gateChecking ? 'Checking…' : 'Continue'}
+          </button>
+        </div>
+      </main>
+    )
   }
 
   return (
